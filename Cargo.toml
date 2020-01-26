@@ -1,0 +1,12 @@
+[package]
+name = "imbot"
+version = "0.1.0"
+authors = ["texbois"]
+edition = "2018"
+
+[dependencies]
+tokio = { version = "0.2", features = ["rt-core", "macros"] }
+reqwest = { version = "0.10", features = ["json"] }
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
