@@ -1,9 +1,13 @@
+mod http;
+mod long_poll;
+pub use long_poll::{VkLongPoll, VkMessage};
+
 use serde_json;
 
 #[derive(Debug)]
 pub struct VkApi {
     token: String,
-    community_id: u64,
+    community_id: String,
     community_name: String,
     client: reqwest::Client,
 }
@@ -12,8 +16,8 @@ impl VkApi {
     pub async fn new(token: String) -> crate::BotResult<Self> {
         let client = reqwest::Client::new();
 
-        let mut communities =
-            call_api::<serde_json::Value>(&client, &token, "groups.getById", &[]).await?;
+        let mut communities: serde_json::Value =
+            http::call_api(&client, &token, "groups.getById", &[]).await?;
 
         let mut community = match communities["response"].take() {
             serde_json::Value::Array(comms) if comms.len() == 0 => {
@@ -27,7 +31,7 @@ impl VkApi {
             }
         };
 
-        let community_id = community["id"].as_u64().unwrap();
+        let community_id = community["id"].as_u64().unwrap().to_string();
         let community_name = match community["name"].take() {
             serde_json::Value::String(name) => name,
             _ => return Err("Missing community name in groups.getById response".into()),
@@ -40,22 +44,19 @@ impl VkApi {
             client,
         })
     }
-}
 
-#[inline]
-async fn call_api<T: serde::de::DeserializeOwned>(
-    client: &reqwest::Client,
-    token: &str,
-    method: &str,
-    query: &[(&str, &str)],
-) -> crate::BotResult<T> {
-    client
-        .get(&format!("https://api.vk.com/method/{}", method))
-        .query(query)
-        .query(&[("v", "5.103"), ("access_token", token)])
-        .send()
-        .await?
-        .json::<T>()
-        .await
-        .map_err(|e| e.into())
+    pub async fn init_long_poll<'a>(&'a self) -> crate::BotResult<VkLongPoll<'a>> {
+        let state = http::call_api(
+            &self.client,
+            &self.token,
+            "groups.getLongPollServer",
+            &[("group_id", &self.community_id)],
+        )
+        .await?;
+
+        Ok(VkLongPoll {
+            state,
+            client: &self.client,
+        })
+    }
 }

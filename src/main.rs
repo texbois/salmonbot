@@ -8,8 +8,14 @@ async fn main() -> BotResult<()> {
         .expect("Provide a valid API token via the COMMUNITY_TOKEN environment variable");
 
     let vk = vkapi::VkApi::new(token).await?;
+    vk.init_long_poll().await?.poll(process_message).await?;
 
     println!("Vk client: {:?}", vk);
 
+    Ok(())
+}
+
+async fn process_message(msg: vkapi::VkMessage) -> BotResult<()> {
+    println!("Message: {:?}", msg);
     Ok(())
 }
