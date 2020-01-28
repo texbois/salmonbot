@@ -1,4 +1,4 @@
-#![recursion_limit="256"]
+#![recursion_limit = "256"]
 
 mod vkapi;
 
@@ -12,12 +12,23 @@ async fn main() -> BotResult<()> {
     let vk = vkapi::VkApi::new(token).await?;
     vk.init_long_poll().await?.poll(process_message).await?;
 
-    println!("Vk client: {:?}", vk);
-
     Ok(())
 }
 
-async fn process_message(msg: vkapi::VkMessage) -> BotResult<()> {
+async fn process_message(vk: &vkapi::VkApi, msg: vkapi::VkMessage) -> BotResult<()> {
     println!("Message: {:?}", msg);
+
+    for photo in msg.attachments {
+        let img_bytes = vk.fetch_photo(&photo).await?;
+        let img = image::load_from_memory(&img_bytes)?;
+
+        let hasher = img_hash::HasherConfig::new()
+            .hash_alg(img_hash::HashAlg::Mean)
+            .preproc_dct()
+            .to_hasher();
+        let hash = hasher.hash_image(&img);
+
+        println!("Image hash: {:?}", hash);
+    }
     Ok(())
 }

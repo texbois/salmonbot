@@ -1,6 +1,6 @@
 mod http;
 mod long_poll;
-pub use long_poll::{VkLongPoll, VkMessage};
+pub use long_poll::{VkLongPoll, VkMessage, VkPhoto};
 
 use serde_json;
 
@@ -9,7 +9,7 @@ pub struct VkApi {
     token: String,
     community_id: String,
     community_name: String,
-    client: reqwest::Client,
+    pub client: reqwest::Client,
 }
 
 impl VkApi {
@@ -57,9 +57,17 @@ impl VkApi {
         )
         .await?;
 
-        Ok(VkLongPoll {
-            state,
-            client: &self.client,
-        })
+        Ok(VkLongPoll { state, api: &self })
+    }
+
+    pub async fn fetch_photo(&self, photo: &VkPhoto) -> crate::BotResult<bytes::Bytes> {
+        let body = self
+            .client
+            .get(&photo.max_size_url)
+            .send()
+            .await?
+            .bytes()
+            .await?;
+        Ok(body)
     }
 }

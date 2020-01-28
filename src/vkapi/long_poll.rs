@@ -1,10 +1,10 @@
-use crate::vkapi::http::get_json;
+use crate::vkapi::{http::get_json, VkApi};
 use serde_derive::Deserialize;
 use std::future::Future;
 
 pub struct VkLongPoll<'a> {
     pub state: VkLongPollState,
-    pub client: &'a reqwest::Client,
+    pub api: &'a VkApi,
 }
 
 #[derive(Debug, Deserialize)]
@@ -29,11 +29,11 @@ pub struct VkPhoto {
 impl<'a> VkLongPoll<'a> {
     pub async fn poll<F, R>(&mut self, mut callback: F) -> crate::BotResult<()>
     where
-        F: FnMut(VkMessage) -> R,
+        F: FnMut(&'a VkApi, VkMessage) -> R,
         R: Future<Output = crate::BotResult<()>>,
     {
         let mut resp: serde_json::Value = get_json(
-            self.client,
+            &self.api.client,
             &self.state.server,
             &[
                 ("act", "a_check"),
@@ -53,7 +53,7 @@ impl<'a> VkLongPoll<'a> {
         match resp.get_mut("updates").map(|u| u.take()) {
             Some(serde_json::Value::Array(updates)) => {
                 for u in updates.into_iter().filter_map(try_parse_update) {
-                    callback(u).await?;
+                    callback(self.api, u).await?;
                 }
             }
             _ => return Err(format!("Long poll response missing \"updates\": {:?}", resp).into()),
