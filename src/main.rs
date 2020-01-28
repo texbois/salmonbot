@@ -1,3 +1,5 @@
+#![recursion_limit="256"]
+
 mod vkapi;
 
 pub type BotResult<T> = Result<T, Box<dyn std::error::Error>>;
