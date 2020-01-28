@@ -11,7 +11,7 @@ pub struct VkLongPoll<'a> {
 pub struct VkLongPollState {
     key: String,
     server: String,
-    ts: u64,
+    ts: String,
 }
 
 #[derive(Debug)]
@@ -25,29 +25,29 @@ impl<'a> VkLongPoll<'a> {
     {
         let mut resp: serde_json::Value = get_json(
             self.client,
-            &format!("https://{}", self.state.server),
+            &self.state.server,
             &[
                 ("act", "a_check"),
                 ("key", &self.state.key),
-                ("ts", &self.state.ts.to_string()),
+                ("ts", &self.state.ts),
                 ("wait", "25"),
             ],
+            None,
         )
         .await?;
 
-        self.state.ts = resp["ts"]
-            .as_u64()
-            .ok_or(format!("Long poll response is missing \"ts\": {:?}", resp))?;
+        self.state.ts = match resp.get_mut("ts").map(|ts| ts.take()) {
+            Some(serde_json::Value::String(ts)) => ts,
+            _ => return Err(format!("Long poll response missing \"ts\": {:?}", resp).into()),
+        };
 
-        match resp["updates"].take() {
-            serde_json::Value::Array(updates) => {
+        match resp.get_mut("updates").map(|u| u.take()) {
+            Some(serde_json::Value::Array(updates)) => {
                 for u in updates.into_iter().filter_map(try_parse_message) {
                     callback(u).await?;
                 }
             }
-            _ => {
-                return Err(format!("Long poll response is missing \"updates\": {:?}", resp).into())
-            }
+            _ => return Err(format!("Long poll response missing \"updates\": {:?}", resp).into()),
         }
 
         Ok(())

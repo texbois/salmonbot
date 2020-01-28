@@ -16,25 +16,28 @@ impl VkApi {
     pub async fn new(token: String) -> crate::BotResult<Self> {
         let client = reqwest::Client::new();
 
-        let mut communities: serde_json::Value =
-            http::call_api(&client, &token, "groups.getById", &[]).await?;
+        let communities =
+            http::call_api::<serde_json::Value>(&client, &token, "groups.getById", &[])
+                .await?
+                .take();
 
-        let mut community = match communities["response"].take() {
-            serde_json::Value::Array(comms) if comms.len() == 0 => {
-                return Err("The bot is not linked to any communities".into())
-            }
-            serde_json::Value::Array(mut comms) => comms.remove(0),
+        let mut community = match communities {
+            serde_json::Value::Array(mut comms) if comms.len() == 1 => comms.remove(0),
             resp => {
-                return Err(
-                    format!("Unexpected \"response\" for groups.getById: {:?}", resp).into(),
+                return Err(format!(
+                    "The bot should be linked is linked to none or multiple communities, got: {:?}",
+                    resp
                 )
+                .into())
             }
         };
-
-        let community_id = community["id"].as_u64().unwrap().to_string();
-        let community_name = match community["name"].take() {
-            serde_json::Value::String(name) => name,
-            _ => return Err("Missing community name in groups.getById response".into()),
+        let community_id = match community.get("id").and_then(|id| id.as_u64()) {
+            Some(id) => id.to_string(),
+            _ => return Err(format!("Group item missing \"id\": {:?}", community).into()),
+        };
+        let community_name = match community.get_mut("name").map(|n| n.take()) {
+            Some(serde_json::Value::String(name)) => name,
+            _ => return Err(format!("Group item missing \"name\" {:?}", community).into()),
         };
 
         Ok(Self {
