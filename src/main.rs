@@ -19,7 +19,9 @@ async fn process_message(vk: &vkapi::VkApi, msg: vkapi::VkMessage) -> BotResult<
     println!("Message: {:?}", msg);
 
     const HASH_FOOD: [u8; 14] = [50, 43, 61, 197, 89, 22, 36, 42, 27, 149, 196, 74, 50, 183];
-    const HASH_WRENCH: [u8; 14] = [220, 149, 201, 150, 157, 70, 121, 74, 100, 98, 218, 101, 142, 77];
+    const HASH_WRENCH: [u8; 14] = [
+        220, 149, 201, 150, 157, 70, 121, 74, 100, 98, 218, 101, 142, 77,
+    ];
     const HASH_BIRD: [u8; 14] = [208, 92, 39, 121, 50, 47, 89, 88, 18, 77, 107, 18, 109, 45];
 
     let attachments = msg
@@ -43,18 +45,22 @@ async fn process_message(vk: &vkapi::VkApi, msg: vkapi::VkMessage) -> BotResult<
             let image = image::load_from_memory(&vk.fetch_photo(photo).await?)?;
             let hash = hasher.hash_image(&image);
 
-            results.push(if hash.as_bytes() == HASH_FOOD {
-                "Еда!".to_owned()
-            } else if hash.as_bytes() == HASH_WRENCH {
-                "Гаечный ключ!".to_owned()
-            } else if hash.as_bytes() == HASH_BIRD {
-                "Мудрая Птица!".to_owned()
+            let dist_food = hamming::distance(&HASH_FOOD, hash.as_bytes());
+            let dist_wrench = hamming::distance(&HASH_WRENCH, hash.as_bytes());
+            let dist_bird = hamming::distance(&HASH_BIRD, hash.as_bytes());
+
+            results.push(if dist_food <= 2 {
+                format!("Еда {}!", dist_food)
+            } else if dist_wrench <= 2 {
+                format!("Гаечный ключ {}!", dist_wrench)
+            } else if dist_bird <= 2 {
+                format!("Мудрая Птица {}!", dist_bird)
             } else {
                 format!(
                     "Такого не знаю... (еда: {}, ключ: {}, птица: {}, h: {:?})",
-                    hamming::distance(&HASH_FOOD, hash.as_bytes()),
-                    hamming::distance(&HASH_WRENCH, hash.as_bytes()),
-                    hamming::distance(&HASH_BIRD, hash.as_bytes()),
+                    dist_food,
+                    dist_wrench,
+                    dist_bird,
                     hash.as_bytes()
                 )
             });
