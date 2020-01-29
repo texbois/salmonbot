@@ -33,34 +33,34 @@ impl<'a> VkLongPoll<'a> {
         F: FnMut(&'a VkApi, VkMessage) -> R,
         R: Future<Output = crate::BotResult<()>>,
     {
-        let mut resp: serde_json::Value = get_json(
-            &self.api.client,
-            &self.state.server,
-            &[
-                ("act", "a_check"),
-                ("key", &self.state.key),
-                ("ts", &self.state.ts),
-                ("wait", "25"),
-            ],
-            None,
-        )
-        .await?;
+        loop {
+            let mut resp: serde_json::Value = get_json(
+                &self.api.client,
+                &self.state.server,
+                &[
+                    ("act", "a_check"),
+                    ("key", &self.state.key),
+                    ("ts", &self.state.ts),
+                    ("wait", "25"),
+                ],
+                None,
+            )
+            .await?;
 
-        self.state.ts = match resp.get_mut("ts").map(|ts| ts.take()) {
-            Some(serde_json::Value::String(ts)) => ts,
-            _ => return Err(format!("Long poll response missing \"ts\": {:?}", resp).into()),
-        };
+            self.state.ts = match resp.get_mut("ts").map(|ts| ts.take()) {
+                Some(serde_json::Value::String(ts)) => ts,
+                _ => return Err(format!("Poll response missing \"ts\": {:?}", resp).into()),
+            };
 
-        match resp.get_mut("updates").map(|u| u.take()) {
-            Some(serde_json::Value::Array(updates)) => {
-                for u in updates.into_iter().filter_map(try_parse_update) {
-                    callback(self.api, u).await?;
+            match resp.get_mut("updates").map(|u| u.take()) {
+                Some(serde_json::Value::Array(updates)) => {
+                    for u in updates.into_iter().filter_map(try_parse_update) {
+                        callback(self.api, u).await?;
+                    }
                 }
+                _ => return Err(format!("Poll response missing \"updates\": {:?}", resp).into()),
             }
-            _ => return Err(format!("Long poll response missing \"updates\": {:?}", resp).into()),
         }
-
-        Ok(())
     }
 }
 
