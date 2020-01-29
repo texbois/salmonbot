@@ -14,3 +14,7 @@ bytes = "0.5"
 image = "0.22"
 img_hash = "3.0"
 hamming = "0.1"
+
+[profile.release]
+lto = true
+codegen-units = 1
