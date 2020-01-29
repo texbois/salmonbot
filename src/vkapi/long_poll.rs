@@ -108,9 +108,8 @@ fn try_extract_attachment(mut attachment: serde_json::Value) -> Option<VkPhoto> 
         .remove("sizes")?
         .as_array_mut()?
         .drain(0..)
-        .max_by_key(|size| {
-            size["height"].as_u64().unwrap_or(0) + size["width"].as_u64().unwrap_or(0)
-        })?;
+        .filter(|size| ["m", "x", "y", "z", "w"].contains(&size["type"].as_str().unwrap_or("")))
+        .min_by_key(|size| size["width"].as_u64().unwrap_or(std::u64::MAX))?;
 
     match max_photo_size_url["url"].take() {
         serde_json::Value::String(max_size_url) => Some(VkPhoto { max_size_url }),
@@ -199,7 +198,7 @@ mod tests {
                     text: "forwarded text".to_owned(),
                     from_id: 1020,
                     attachments: vec![VkPhoto {
-                        max_size_url: "$2560_url".into()
+                        max_size_url: "$med_url".into()
                     }],
                     forwarded: vec![]
                 })]
