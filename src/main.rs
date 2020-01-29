@@ -18,30 +18,47 @@ async fn main() -> BotResult<()> {
 async fn process_message(vk: &vkapi::VkApi, msg: vkapi::VkMessage) -> BotResult<()> {
     println!("Message: {:?}", msg);
 
-    if msg.attachments.len() == 2 {
-        let image1 = image::load_from_memory(&vk.fetch_photo(&msg.attachments[0]).await?)?;
-        let image2 = image::load_from_memory(&vk.fetch_photo(&msg.attachments[1]).await?)?;
+    const HASH_FOOD: [u8; 14] = [50, 43, 61, 197, 89, 22, 36, 42, 27, 149, 196, 74, 50, 183];
+    const HASH_WRENCH: [u8; 14] = [220, 149, 201, 150, 157, 70, 121, 74, 100, 98, 218, 101, 142, 77];
+    const HASH_BIRD: [u8; 14] = [208, 92, 39, 121, 50, 47, 89, 88, 18, 77, 107, 18, 109, 45];
+
+    let attachments = msg
+        .attachments
+        .iter()
+        .chain(msg.forwarded.iter().flat_map(|m| &m.attachments))
+        .collect::<Vec<_>>();
+    if attachments.len() == 0 {
+        vk.send_message(msg.from_id, "Я тебя не вижу!").await
+    } else {
+        vk.send_message(msg.from_id, "Дай подумать...").await?;
 
         let hasher = img_hash::HasherConfig::new()
-            .hash_alg(img_hash::HashAlg::Mean)
+            .hash_alg(img_hash::HashAlg::DoubleGradient)
+            .hash_size(14, 14)
             .preproc_dct()
             .to_hasher();
 
-        let hash1 = hasher.hash_image(&image1);
-        let hash2 = hasher.hash_image(&image2);
+        let mut results: Vec<String> = Vec::new();
+        for photo in attachments {
+            let image = image::load_from_memory(&vk.fetch_photo(photo).await?)?;
+            let hash = hasher.hash_image(&image);
 
-        let distance = hamming::distance(hash1.as_bytes(), hash2.as_bytes());
-
-        let reply = format!(
-            "hash 1: {:?}, hash 2: {:?}, hamming distance: {}",
-            hash1.as_bytes(),
-            hash2.as_bytes(),
-            distance
-        );
-
-        vk.send_message(msg.from_id, &reply).await
-    } else {
-        vk.send_message(msg.from_id, "Two attachments required for hash comparison")
-            .await
+            results.push(if hash.as_bytes() == HASH_FOOD {
+                "Еда!".to_owned()
+            } else if hash.as_bytes() == HASH_WRENCH {
+                "Гаечный ключ!".to_owned()
+            } else if hash.as_bytes() == HASH_BIRD {
+                "Мудрая Птица!".to_owned()
+            } else {
+                format!(
+                    "Такого не знаю... (еда: {}, ключ: {}, птица: {}, h: {:?})",
+                    hamming::distance(&HASH_FOOD, hash.as_bytes()),
+                    hamming::distance(&HASH_WRENCH, hash.as_bytes()),
+                    hamming::distance(&HASH_BIRD, hash.as_bytes()),
+                    hash.as_bytes()
+                )
+            });
+        }
+        vk.send_message(msg.from_id, &results.join(" ")).await
     }
 }
