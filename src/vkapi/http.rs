@@ -25,12 +25,13 @@ pub async fn call_api<T: serde::de::DeserializeOwned>(
     token: &str,
     method: &str,
     query: &[(&str, &str)],
+    json_response_key: Option<&str>,
 ) -> crate::BotResult<T> {
     get_json(
         client,
         &format!("https://api.vk.com/method/{}", method),
         &[query, &[("v", "5.103"), ("access_token", token)]].concat(),
-        Some("response"),
+        json_response_key
     )
     .await
 }

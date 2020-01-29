@@ -16,10 +16,8 @@ impl VkApi {
     pub async fn new(token: String) -> crate::BotResult<Self> {
         let client = reqwest::Client::new();
 
-        let communities =
-            http::call_api::<serde_json::Value>(&client, &token, "groups.getById", &[])
-                .await?
-                .take();
+        let communities: serde_json::Value =
+            http::call_api(&client, &token, "groups.getById", &[], Some("response")).await?;
 
         let mut community = match communities {
             serde_json::Value::Array(mut comms) if comms.len() == 1 => comms.remove(0),
@@ -54,20 +52,41 @@ impl VkApi {
             &self.token,
             "groups.getLongPollServer",
             &[("group_id", &self.community_id)],
+            Some("response"),
         )
         .await?;
 
         Ok(VkLongPoll { state, api: &self })
     }
 
+    pub async fn send_message(&self, peer_id: i64, text: &str) -> crate::BotResult<()> {
+        let random_id = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_millis()
+            .to_string();
+        let resp: serde_json::Value = http::call_api(
+            &self.client,
+            &self.token,
+            "messages.send",
+            &[
+                ("peer_id", &peer_id.to_string()),
+                ("message", text),
+                ("random_id", &random_id),
+            ],
+            None,
+        )
+        .await?;
+
+        if let Some(error) = resp.get("error") {
+            Err(format!("messages.send returned an error: {}", error).into())
+        } else {
+            Ok(())
+        }
+    }
+
     pub async fn fetch_photo(&self, photo: &VkPhoto) -> crate::BotResult<bytes::Bytes> {
-        let body = self
-            .client
-            .get(&photo.max_size_url)
-            .send()
-            .await?
-            .bytes()
-            .await?;
+        let req = self.client.get(&photo.max_size_url);
+        let body = req.send().await?.bytes().await?;
         Ok(body)
     }
 }
