@@ -17,6 +17,7 @@ pub struct VkLongPollState {
 #[derive(Debug, PartialEq)]
 pub struct VkMessage {
     pub text: String,
+    pub from_id: i64,
     pub attachments: Vec<VkPhoto>,
     pub forwarded: Vec<Box<VkMessage>>,
 }
@@ -76,6 +77,7 @@ fn try_parse_message(mut message: serde_json::Value) -> Option<VkMessage> {
         Some(serde_json::Value::String(s)) => s,
         _ => String::new(),
     };
+    let from_id = message.get("from_id")?.as_i64()?;
     let attachments = match message.get_mut("attachments").map(|a| a.take()) {
         Some(serde_json::Value::Array(atts)) => atts
             .into_iter()
@@ -93,6 +95,7 @@ fn try_parse_message(mut message: serde_json::Value) -> Option<VkMessage> {
     };
     Some(VkMessage {
         text,
+        from_id,
         attachments,
         forwarded,
     })
@@ -136,7 +139,7 @@ mod tests {
                     "attachments": [],
                     "conversation_message_id": 2,
                     "date": 1580239358,
-                    "from_id": 1000,
+                    "from_id": 1010,
                     "id": 2,
                     "important": false,
                     "is_hidden": false,
@@ -175,7 +178,7 @@ mod tests {
                         }],
                         "conversation_message_id": 1,
                         "date": 1580239336,
-                        "from_id": 1000,
+                        "from_id": 1020,
                         "id": 1,
                         "peer_id": 1000,
                         "text": "forwarded text"
@@ -190,9 +193,11 @@ mod tests {
             msg,
             Some(VkMessage {
                 text: "hey check this out".to_owned(),
+                from_id: 1010,
                 attachments: vec![],
                 forwarded: vec![Box::new(VkMessage {
                     text: "forwarded text".to_owned(),
+                    from_id: 1020,
                     attachments: vec![VkPhoto {
                         max_size_url: "$2560_url".into()
                     }],
