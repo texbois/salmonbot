@@ -1,6 +1,5 @@
-use crate::vkapi::{http::get_json, Client, VkApi};
+use crate::vkapi::{Client, VkApi};
 use serde_derive::Deserialize;
-use std::future::Future;
 
 pub struct VkLongPoll<'a, C: Client> {
     pub state: VkLongPollState,
@@ -28,29 +27,26 @@ pub struct VkPhoto {
 }
 
 impl<'a, C: Client> VkLongPoll<'a, C> {
-    pub async fn init(api: &'a VkApi<C>) -> crate::BotResult<VkLongPoll<'a, C>> {
-        let state = api.init_long_poll_state().await?;
+    pub fn init(api: &'a VkApi<C>) -> crate::BotResult<VkLongPoll<'a, C>> {
+        let state = api.init_long_poll_state()?;
         Ok(Self { state, api })
     }
 
-    pub async fn poll<F, R>(&mut self, mut callback: F) -> crate::BotResult<()>
+    pub fn poll<F>(&mut self, mut callback: F) -> crate::BotResult<()>
     where
-        F: FnMut(&'a VkApi<C>, VkMessage) -> R,
-        R: Future<Output = crate::BotResult<()>>,
+        F: FnMut(VkMessage) -> crate::BotResult<()>,
     {
         loop {
-            let mut resp: serde_json::Value = get_json(
-                &self.api.client,
-                &self.state.server,
-                &[
-                    ("act", "a_check"),
-                    ("key", &self.state.key),
-                    ("ts", &self.state.ts),
-                    ("wait", "25"),
-                ],
-                None,
-            )
-            .await?;
+            let params = [
+                ("act", "a_check"),
+                ("key", &self.state.key),
+                ("ts", &self.state.ts),
+                ("wait", "25"),
+            ];
+            let mut resp: serde_json::Value =
+                self.api
+                    .client
+                    .get_json(&self.state.server, &params, None)?;
 
             self.state.ts = match resp.get_mut("ts").map(|ts| ts.take()) {
                 Some(serde_json::Value::String(ts)) => ts,
@@ -59,9 +55,10 @@ impl<'a, C: Client> VkLongPoll<'a, C> {
 
             match resp.get_mut("updates").map(|u| u.take()) {
                 Some(serde_json::Value::Array(updates)) => {
-                    for u in updates.into_iter().filter_map(try_parse_update) {
-                        callback(self.api, u).await?;
-                    }
+                    updates
+                        .into_iter()
+                        .filter_map(try_parse_update)
+                        .try_for_each(&mut callback)?;
                 }
                 _ => return Err(format!("Poll response missing \"updates\": {:?}", resp).into()),
             }

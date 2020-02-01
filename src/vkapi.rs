@@ -23,9 +23,9 @@ impl<C: Client> std::fmt::Display for VkApi<C> {
 }
 
 impl<C: Client> VkApi<C> {
-    pub async fn new(client: C, token: String) -> crate::BotResult<Self> {
+    pub fn new(client: C, token: String) -> crate::BotResult<Self> {
         let communities: serde_json::Value =
-            http::call_api(&client, &token, "groups.getById", &[], Some("response")).await?;
+            client.call_api(&token, "groups.getById", &[], Some("response"))?;
 
         let mut community = match communities {
             serde_json::Value::Array(mut comms) if comms.len() == 1 => comms.remove(0),
@@ -54,38 +54,34 @@ impl<C: Client> VkApi<C> {
         })
     }
 
-    pub async fn init_long_poll<'a>(&'a self) -> crate::BotResult<VkLongPoll<'a, C>> {
-        VkLongPoll::init(self).await
+    pub fn init_long_poll<'a>(&'a self) -> crate::BotResult<VkLongPoll<'a, C>> {
+        VkLongPoll::init(self)
     }
 
-    pub async fn init_long_poll_state(&self) -> crate::BotResult<VkLongPollState> {
-        http::call_api(
-            &self.client,
+    pub fn init_long_poll_state(&self) -> crate::BotResult<VkLongPollState> {
+        self.client.call_api(
             &self.token,
             "groups.getLongPollServer",
             &[("group_id", &self.community_id)],
             Some("response"),
         )
-        .await
     }
 
-    pub async fn send_message(&self, peer_id: i64, text: &str) -> crate::BotResult<()> {
+    pub fn send_message(&self, peer_id: i64, text: &str) -> crate::BotResult<()> {
         let random_id = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_millis()
             .to_string();
-        let resp: serde_json::Value = http::call_api(
-            &self.client,
+        let resp: serde_json::Value = self.client.call_api(
             &self.token,
             "messages.send",
             &[
                 ("peer_id", &peer_id.to_string()),
-                ("message", text),
+                ("message", &text),
                 ("random_id", &random_id),
             ],
             None,
-        )
-        .await?;
+        )?;
 
         if let Some(error) = resp.get("error") {
             Err(format!("messages.send returned an error: {}", error).into())
@@ -94,7 +90,7 @@ impl<C: Client> VkApi<C> {
         }
     }
 
-    pub async fn fetch_photo(&self, photo: &VkPhoto) -> crate::BotResult<bytes::Bytes> {
-        self.client.get_bytes(&photo.max_size_url, &[]).await
+    pub fn fetch_photo(&self, photo: &VkPhoto) -> crate::BotResult<Vec<u8>> {
+        self.client.fetch(&photo.max_size_url, &[])
     }
 }

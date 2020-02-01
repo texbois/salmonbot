@@ -5,21 +5,25 @@ use vkapi::{Client, VkApi, VkMessage};
 
 pub type BotResult<T> = Result<T, Box<dyn std::error::Error>>;
 
-#[tokio::main]
-async fn main() -> BotResult<()> {
+fn main() {
     let token = std::env::var("COMMUNITY_TOKEN")
         .expect("Provide a valid API token via the COMMUNITY_TOKEN environment variable");
 
-    let client = reqwest::Client::new();
-    let vk = VkApi::new(client, token).await?;
-    println!("Running {}", vk);
-
-    vk.init_long_poll().await?.poll(process_message).await?;
-
-    Ok(())
+    match run_bot(token) {
+        Ok(_) => (),
+        Err(err) => eprintln!("Error: {}", err),
+    }
 }
 
-async fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<()> {
+fn run_bot(token: String) -> BotResult<()> {
+    let client = ureq::agent();
+    let vk = VkApi::new(client, token)?;
+    println!("Running {}", vk);
+
+    vk.init_long_poll()?.poll(|u| process_message(&vk, u))
+}
+
+fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<()> {
     println!("Message: {:?}", msg);
 
     const HASH_FOOD: [u8; 14] = [50, 43, 61, 197, 89, 22, 36, 42, 27, 149, 196, 74, 50, 183];
@@ -34,9 +38,9 @@ async fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<
         .chain(msg.forwarded.iter().flat_map(|m| &m.attachments))
         .collect::<Vec<_>>();
     if attachments.len() == 0 {
-        vk.send_message(msg.from_id, "Я тебя не вижу!").await
+        vk.send_message(msg.from_id, "Я тебя не вижу!")
     } else {
-        vk.send_message(msg.from_id, "Дай подумать...").await?;
+        vk.send_message(msg.from_id, "Дай подумать...")?;
 
         let hasher = img_hash::HasherConfig::new()
             .hash_alg(img_hash::HashAlg::DoubleGradient)
@@ -46,7 +50,7 @@ async fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<
 
         let mut results: Vec<String> = Vec::new();
         for photo in attachments {
-            let image = image::load_from_memory(&vk.fetch_photo(photo).await?)?;
+            let image = image::load_from_memory(&vk.fetch_photo(photo)?)?;
             let hash = hasher.hash_image(&image);
 
             let dist_food = hamming::distance(&HASH_FOOD, hash.as_bytes());
@@ -69,6 +73,6 @@ async fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<
                 )
             });
         }
-        vk.send_message(msg.from_id, &results.join(" ")).await
+        vk.send_message(msg.from_id, &results.join(" "))
     }
 }

@@ -1,52 +1,58 @@
-use async_trait::async_trait;
-
-#[async_trait]
 pub trait Client {
-    async fn get_bytes(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<bytes::Bytes>;
-}
+    fn fetch(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<Vec<u8>>;
 
-#[async_trait]
-impl Client for reqwest::Client {
-    async fn get_bytes(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<bytes::Bytes> {
-        Ok(self.get(url).query(query).send().await?.bytes().await?)
+    #[inline]
+    fn call_api<T: serde::de::DeserializeOwned>(
+        &self,
+        token: &str,
+        method: &str,
+        query: &[(&str, &str)],
+        json_response_key: Option<&str>,
+    ) -> crate::BotResult<T> {
+        self.get_json(
+            &format!("https://api.vk.com/method/{}", method),
+            &[query, &[("v", "5.103"), ("access_token", token)]].concat(),
+            json_response_key,
+        )
+    }
+
+    fn get_json<T: serde::de::DeserializeOwned>(
+        &self,
+        url: &str,
+        query: &[(&str, &str)],
+        json_response_key: Option<&str>,
+    ) -> crate::BotResult<T> {
+        let body = self.fetch(url, query)?;
+        if let Some(key) = json_response_key {
+            serde_json::from_slice::<serde_json::Value>(&body)
+                .map_err(|e| json_error(url, &body, e.into()))?
+                .get_mut(key)
+                .ok_or_else(|| {
+                    json_error(url, &body, format!("Missing response key {}", key).into())
+                })
+                .and_then(|r| {
+                    serde_json::from_value(r.take()).map_err(|e| json_error(url, &body, e.into()))
+                })
+        } else {
+            serde_json::from_slice(&body).map_err(|e| json_error(url, &body, e.into()))
+        }
     }
 }
 
-pub async fn get_json<C: Client, T: serde::de::DeserializeOwned>(
-    client: &C,
-    url: &str,
-    query: &[(&str, &str)],
-    json_response_key: Option<&str>,
-) -> crate::BotResult<T> {
-    let body = client.get_bytes(url, query).await?;
-    if let Some(key) = json_response_key {
-        serde_json::from_slice::<serde_json::Value>(&body)
-            .map_err(|e| json_error(url, &body, e.into()))?
-            .get_mut(key)
-            .ok_or_else(|| json_error(url, &body, format!("Missing response key {}", key).into()))
-            .and_then(|r| {
-                serde_json::from_value(r.take()).map_err(|e| json_error(url, &body, e.into()))
-            })
-    } else {
-        serde_json::from_slice(&body).map_err(|e| json_error(url, &body, e.into()))
-    }
-}
+impl Client for ureq::Agent {
+    fn fetch(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<Vec<u8>> {
+        use std::io::Read;
 
-#[inline]
-pub async fn call_api<C: Client, T: serde::de::DeserializeOwned>(
-    client: &C,
-    token: &str,
-    method: &str,
-    query: &[(&str, &str)],
-    json_response_key: Option<&str>,
-) -> crate::BotResult<T> {
-    get_json(
-        client,
-        &format!("https://api.vk.com/method/{}", method),
-        &[query, &[("v", "5.103"), ("access_token", token)]].concat(),
-        json_response_key,
-    )
-    .await
+        let mut request = self.get(url);
+        for (k, v) in query {
+            request.query(k, v);
+        }
+        let resp = request.timeout_connect(5_000).timeout_read(30_000).call();
+        let mut data = Vec::new();
+        resp.into_reader().read_to_end(&mut data)?;
+
+        Ok(data)
+    }
 }
 
 fn json_error(
