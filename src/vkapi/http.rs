@@ -1,11 +1,24 @@
-pub async fn get_json<T: serde::de::DeserializeOwned>(
-    client: &reqwest::Client,
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait Client {
+    async fn get_bytes(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<bytes::Bytes>;
+}
+
+#[async_trait]
+impl Client for reqwest::Client {
+    async fn get_bytes(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<bytes::Bytes> {
+        Ok(self.get(url).query(query).send().await?.bytes().await?)
+    }
+}
+
+pub async fn get_json<C: Client, T: serde::de::DeserializeOwned>(
+    client: &C,
     url: &str,
     query: &[(&str, &str)],
     json_response_key: Option<&str>,
 ) -> crate::BotResult<T> {
-    let body = client.get(url).query(query).send().await?.bytes().await?;
-
+    let body = client.get_bytes(url, query).await?;
     if let Some(key) = json_response_key {
         serde_json::from_slice::<serde_json::Value>(&body)
             .map_err(|e| json_error(url, &body, e.into()))?
@@ -20,8 +33,8 @@ pub async fn get_json<T: serde::de::DeserializeOwned>(
 }
 
 #[inline]
-pub async fn call_api<T: serde::de::DeserializeOwned>(
-    client: &reqwest::Client,
+pub async fn call_api<C: Client, T: serde::de::DeserializeOwned>(
+    client: &C,
     token: &str,
     method: &str,
     query: &[(&str, &str)],
@@ -31,7 +44,7 @@ pub async fn call_api<T: serde::de::DeserializeOwned>(
         client,
         &format!("https://api.vk.com/method/{}", method),
         &[query, &[("v", "5.103"), ("access_token", token)]].concat(),
-        json_response_key
+        json_response_key,
     )
     .await
 }

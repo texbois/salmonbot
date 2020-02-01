@@ -1,21 +1,29 @@
 mod http;
 mod long_poll;
-pub use long_poll::{VkLongPoll, VkMessage, VkPhoto};
+pub use http::Client;
+pub use long_poll::{VkLongPoll, VkLongPollState, VkMessage, VkPhoto};
 
 use serde_json;
 
-#[derive(Debug)]
-pub struct VkApi {
+pub struct VkApi<C: Client> {
+    pub client: C,
     token: String,
     community_id: String,
     community_name: String,
-    pub client: reqwest::Client,
 }
 
-impl VkApi {
-    pub async fn new(token: String) -> crate::BotResult<Self> {
-        let client = reqwest::Client::new();
+impl<C: Client> std::fmt::Display for VkApi<C> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Vk community bot ({}, id {})",
+            self.community_name, self.community_id
+        )
+    }
+}
 
+impl<C: Client> VkApi<C> {
+    pub async fn new(client: C, token: String) -> crate::BotResult<Self> {
         let communities: serde_json::Value =
             http::call_api(&client, &token, "groups.getById", &[], Some("response")).await?;
 
@@ -39,24 +47,26 @@ impl VkApi {
         };
 
         Ok(Self {
+            client,
             token,
             community_id,
             community_name,
-            client,
         })
     }
 
-    pub async fn init_long_poll<'a>(&'a self) -> crate::BotResult<VkLongPoll<'a>> {
-        let state = http::call_api(
+    pub async fn init_long_poll<'a>(&'a self) -> crate::BotResult<VkLongPoll<'a, C>> {
+        VkLongPoll::init(self).await
+    }
+
+    pub async fn init_long_poll_state(&self) -> crate::BotResult<VkLongPollState> {
+        http::call_api(
             &self.client,
             &self.token,
             "groups.getLongPollServer",
             &[("group_id", &self.community_id)],
             Some("response"),
         )
-        .await?;
-
-        Ok(VkLongPoll { state, api: &self })
+        .await
     }
 
     pub async fn send_message(&self, peer_id: i64, text: &str) -> crate::BotResult<()> {
@@ -85,8 +95,6 @@ impl VkApi {
     }
 
     pub async fn fetch_photo(&self, photo: &VkPhoto) -> crate::BotResult<bytes::Bytes> {
-        let req = self.client.get(&photo.max_size_url);
-        let body = req.send().await?.bytes().await?;
-        Ok(body)
+        self.client.get_bytes(&photo.max_size_url, &[]).await
     }
 }

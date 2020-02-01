@@ -1,10 +1,10 @@
-use crate::vkapi::{http::get_json, VkApi};
+use crate::vkapi::{http::get_json, Client, VkApi};
 use serde_derive::Deserialize;
 use std::future::Future;
 
-pub struct VkLongPoll<'a> {
+pub struct VkLongPoll<'a, C: Client> {
     pub state: VkLongPollState,
-    pub api: &'a VkApi,
+    pub api: &'a VkApi<C>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -27,10 +27,15 @@ pub struct VkPhoto {
     pub max_size_url: String,
 }
 
-impl<'a> VkLongPoll<'a> {
+impl<'a, C: Client> VkLongPoll<'a, C> {
+    pub async fn init(api: &'a VkApi<C>) -> crate::BotResult<VkLongPoll<'a, C>> {
+        let state = api.init_long_poll_state().await?;
+        Ok(Self { state, api })
+    }
+
     pub async fn poll<F, R>(&mut self, mut callback: F) -> crate::BotResult<()>
     where
-        F: FnMut(&'a VkApi, VkMessage) -> R,
+        F: FnMut(&'a VkApi<C>, VkMessage) -> R,
         R: Future<Output = crate::BotResult<()>>,
     {
         loop {

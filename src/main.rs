@@ -1,6 +1,7 @@
 #![recursion_limit = "256"]
 
 mod vkapi;
+use vkapi::{Client, VkApi, VkMessage};
 
 pub type BotResult<T> = Result<T, Box<dyn std::error::Error>>;
 
@@ -9,13 +10,16 @@ async fn main() -> BotResult<()> {
     let token = std::env::var("COMMUNITY_TOKEN")
         .expect("Provide a valid API token via the COMMUNITY_TOKEN environment variable");
 
-    let vk = vkapi::VkApi::new(token).await?;
+    let client = reqwest::Client::new();
+    let vk = VkApi::new(client, token).await?;
+    println!("Running {}", vk);
+
     vk.init_long_poll().await?.poll(process_message).await?;
 
     Ok(())
 }
 
-async fn process_message(vk: &vkapi::VkApi, msg: vkapi::VkMessage) -> BotResult<()> {
+async fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<()> {
     println!("Message: {:?}", msg);
 
     const HASH_FOOD: [u8; 14] = [50, 43, 61, 197, 89, 22, 36, 42, 27, 149, 196, 74, 50, 183];
