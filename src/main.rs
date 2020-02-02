@@ -20,7 +20,10 @@ fn run_bot(token: String) -> BotResult<()> {
     let vk = VkApi::new(client, token)?;
     println!("Running {}", vk);
 
-    vk.init_long_poll()?.poll(|u| process_message(&vk, u))
+    let mut lp = vk.init_long_poll()?;
+    loop {
+        lp.poll_once(|u| process_message(&vk, u))?;
+    }
 }
 
 fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<()> {
