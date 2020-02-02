@@ -126,8 +126,12 @@ mod tests {
 
     #[test]
     fn test_poll_instantiation() {
-        let client = crate::vkapi::http::TestClient::new("long_poll_init.json");
-        let vk = VkApi::new(client, "token".into()).unwrap();
+        let vk = VkApi {
+            client: crate::vkapi::http::TestClient::new("long_poll_init.json"),
+            token: "token".into(),
+            community_name: "sample_community".into(),
+            community_id: "1001".into(),
+        };
         let poll = VkLongPoll::init(&vk).unwrap();
         assert_eq!(poll.state.key, "long_poll_key");
         assert_eq!(poll.state.server, "https://long_poll_server");
