@@ -47,17 +47,25 @@ impl<'a, C: Client> VkLongPoll<'a, C> {
                 .client
                 .get_json(&self.state.server, &params, None)?;
 
-        self.state.ts = match resp.get_mut("ts").map(|ts| ts.take()) {
-            Some(serde_json::Value::String(ts)) => ts,
-            _ => return Err(format!("Long poll response missing \"ts\": {:?}", resp).into()),
-        };
-
-        match resp.get_mut("updates").map(|u| u.take()) {
-            Some(serde_json::Value::Array(updates)) => updates
-                .into_iter()
-                .filter_map(try_parse_update)
-                .try_for_each(&mut callback),
-            _ => Err(format!("Long poll response missing \"updates\": {:?}", resp).into()),
+        if let Some(err) = resp.get("failed").and_then(|e| e.as_u64()) {
+            if err < 4 {
+                self.state = self.api.init_long_poll_state()?;
+                Ok(())
+            } else {
+                Err(format!("Long poll request failed: {:?}", resp).into())
+            }
+        } else {
+            self.state.ts = match resp.get_mut("ts").map(|ts| ts.take()) {
+                Some(serde_json::Value::String(ts)) => ts,
+                _ => return Err(format!("Long poll response missing \"ts\": {:?}", resp).into()),
+            };
+            match resp.get_mut("updates").map(|u| u.take()) {
+                Some(serde_json::Value::Array(updates)) => updates
+                    .into_iter()
+                    .filter_map(try_parse_update)
+                    .try_for_each(&mut callback),
+                _ => Err(format!("Long poll response missing \"updates\": {:?}", resp).into()),
+            }
         }
     }
 }
@@ -131,6 +139,28 @@ mod tests {
         assert_eq!(poll.state.key, "long_poll_key");
         assert_eq!(poll.state.server, "https://long_poll_server");
         assert_eq!(poll.state.ts, "100");
+    }
+
+    #[test]
+    fn test_error_response() {
+        let vk = VkApi {
+            client: crate::vkapi::http::TestClient::new("long_poll_failed.json"),
+            token: "token".into(),
+            community_name: "sample_community".into(),
+            community_id: "1001".into(),
+        };
+        let mut lp = VkLongPoll {
+            api: &vk,
+            state: VkLongPollState {
+                key: "long_poll_key".into(),
+                server: "https://long_poll_server".into(),
+                ts: "100".into(),
+            },
+        };
+        lp.poll_once(|_| Ok(())).unwrap();
+        assert_eq!(lp.state.key, "new_long_poll_key");
+        assert_eq!(lp.state.server, "https://new_long_poll_server");
+        assert_eq!(lp.state.ts, "101");
     }
 
     #[test]
