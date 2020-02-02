@@ -1,0 +1,32 @@
+[
+  {
+    "url": "https://api.vk.com/method/groups.getById",
+    "query": {
+      "v": "5.103",
+      "access_token": "token"
+    },
+    "response": {
+      "response": [
+        {
+          "id": 1001,
+          "name": "sample community"
+        }
+      ]
+    }
+  },
+  {
+    "url": "https://api.vk.com/method/groups.getLongPollServer",
+    "query": {
+      "group_id": "1001",
+      "v": "5.103",
+      "access_token": "token"
+    },
+    "response": {
+      "response": {
+        "key": "long_poll_key",
+        "server": "https://long_poll_server",
+        "ts": "100"
+      }
+    }
+  }
+]

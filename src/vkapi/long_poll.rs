@@ -125,6 +125,16 @@ mod tests {
     use serde_json::json;
 
     #[test]
+    fn test_poll_instantiation() {
+        let client = crate::vkapi::http::TestClient::new("long_poll_init.json");
+        let vk = VkApi::new(client, "token".into()).unwrap();
+        let poll = VkLongPoll::init(&vk).unwrap();
+        assert_eq!(poll.state.key, "long_poll_key");
+        assert_eq!(poll.state.server, "https://long_poll_server");
+        assert_eq!(poll.state.ts, "100");
+    }
+
+    #[test]
     fn test_parse_forwarded_attachment() {
         let update = json!({
             "event_id": "deadbeef",

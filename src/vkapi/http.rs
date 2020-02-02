@@ -68,3 +68,53 @@ fn json_error(
     )
     .into()
 }
+
+#[cfg(test)]
+pub use test_client::TestClient;
+
+#[cfg(test)]
+pub mod test_client {
+    use crate::vkapi::http::Client;
+    use serde_derive::Deserialize;
+    use std::collections::{HashMap, VecDeque};
+    use std::iter::FromIterator;
+
+    #[derive(Debug)]
+    pub struct TestClient {
+        fixtures: std::cell::RefCell<VecDeque<ClientFixture>>,
+    }
+
+    #[derive(Debug, Deserialize)]
+    struct ClientFixture {
+        url: String,
+        query: HashMap<String, String>,
+        response: serde_json::Value,
+    }
+
+    impl TestClient {
+        pub fn new(fixture: &str) -> Self {
+            let path = format!("{}/tests/fixtures/{}", env!("CARGO_MANIFEST_DIR"), fixture);
+            let file = std::fs::File::open(&path).expect(&format!("Failed to open {}", path));
+            let fixtures = serde_json::from_reader(file).unwrap();
+            Self { fixtures }
+        }
+    }
+
+    impl Client for TestClient {
+        fn fetch(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<Vec<u8>> {
+            let expected = self.fixtures.borrow_mut().pop_front();
+            let query_map: HashMap<String, String> =
+                HashMap::from_iter(query.iter().map(|(k, v)| (k.to_string(), v.to_string())));
+            if let Some(ref fixture) = expected {
+                if fixture.url == url && fixture.query == query_map {
+                    return Ok(serde_json::to_vec(&fixture.response).unwrap());
+                }
+            }
+            Err(format!(
+                "Expected request: {:?}, got: {:?} {:?}",
+                expected, url, query
+            )
+            .into())
+        }
+    }
+}
