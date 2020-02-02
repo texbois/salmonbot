@@ -11,6 +11,7 @@
       "ts": "103",
       "updates": [
         {
+          "type": "message_new",
           "event_id": "deadbeef",
           "group_id": 1,
           "object": {
@@ -130,8 +131,7 @@
               ],
               "text": "hey check this out"
             }
-          },
-          "type": "message_new"
+          }
         }
       ]
     }
