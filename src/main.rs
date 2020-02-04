@@ -35,11 +35,7 @@ fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<()> {
     ];
     const HASH_BIRD: [u8; 14] = [208, 92, 39, 121, 50, 47, 89, 88, 18, 77, 107, 18, 109, 45];
 
-    let attachments = msg
-        .attachments
-        .iter()
-        .chain(msg.forwarded.iter().flat_map(|m| &m.attachments))
-        .collect::<Vec<_>>();
+    let attachments = msg.all_attachments();
     if attachments.len() == 0 {
         vk.send_message(msg.from_id, "Я тебя не вижу!")
     } else {

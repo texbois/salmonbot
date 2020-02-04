@@ -1,7 +1,9 @@
 mod http;
 mod long_poll;
+mod types;
 pub use http::Client;
-pub use long_poll::{VkLongPoll, VkLongPollState, VkMessage, VkPhoto};
+pub use long_poll::{VkLongPoll, VkLongPollState};
+pub use types::{VkMessage, VkPhoto};
 
 use serde_json;
 
@@ -91,6 +93,6 @@ impl<C: Client> VkApi<C> {
     }
 
     pub fn fetch_photo(&self, photo: &VkPhoto) -> crate::BotResult<Vec<u8>> {
-        self.client.fetch(&photo.max_size_url, &[])
+        self.client.fetch(&photo.0, &[])
     }
 }

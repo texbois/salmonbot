@@ -1,4 +1,4 @@
-use crate::vkapi::{Client, VkApi};
+use crate::vkapi::{Client, VkApi, VkMessage, VkPhoto};
 use serde_derive::Deserialize;
 use serde_json::Value as JsonValue;
 
@@ -12,20 +12,6 @@ pub struct VkLongPollState {
     key: String,
     server: String,
     ts: String,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct VkMessage {
-    pub text: String,
-    pub from_id: i64,
-    pub attachments: Vec<VkPhoto>,
-    pub forwarded: Vec<Box<VkMessage>>,
-    pub reply_to: Option<Box<VkMessage>>,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct VkPhoto {
-    pub max_size_url: String,
 }
 
 impl<'a, C: Client> VkLongPoll<'a, C> {
@@ -91,12 +77,7 @@ fn try_parse_message(message: &mut JsonValue) -> Option<VkMessage> {
     let forwarded = message
         .get_mut("fwd_messages")
         .and_then(|a| a.as_array_mut())
-        .map(|atts| {
-            atts.iter_mut()
-                .filter_map(try_parse_message)
-                .map(Box::new)
-                .collect()
-        })
+        .map(|atts| atts.iter_mut().filter_map(try_parse_message).collect())
         .unwrap_or(Vec::new());
     let reply_to = message
         .get_mut("reply_message")
@@ -128,9 +109,9 @@ fn try_extract_attachment(attachment: &mut JsonValue) -> Option<VkPhoto> {
         .min_by_key(|size| size["width"].as_u64().unwrap_or(std::u64::MAX))?;
 
     if let Some(JsonValue::String(url)) = opt_size_obj.get_mut("url").map(|u| u.take()) {
-        Some(VkPhoto { max_size_url: url })
+        Some(VkPhoto(url))
     } else if let Some(JsonValue::String(url)) = opt_size_obj.get_mut("src").map(|u| u.take()) {
-        Some(VkPhoto { max_size_url: url })
+        Some(VkPhoto(url))
     } else {
         None
     }
@@ -208,9 +189,7 @@ mod tests {
                 reply_to: Some(Box::new(VkMessage {
                     text: "uh, docs aren't photos...".into(),
                     from_id: 1000,
-                    attachments: vec![VkPhoto {
-                        max_size_url: "$med_url".into()
-                    }],
+                    attachments: vec![VkPhoto("$med_url".into())],
                     forwarded: vec![],
                     reply_to: None
                 }))
@@ -246,15 +225,13 @@ mod tests {
                 text: "hey check this out".into(),
                 from_id: 1010,
                 attachments: vec![],
-                forwarded: vec![Box::new(VkMessage {
+                forwarded: vec![VkMessage {
                     text: "forwarded text".into(),
                     from_id: 1020,
-                    attachments: vec![VkPhoto {
-                        max_size_url: "$med_url".into()
-                    }],
+                    attachments: vec![VkPhoto("$med_url".into())],
                     forwarded: vec![],
                     reply_to: None
-                })],
+                }],
                 reply_to: None
             })
         );
