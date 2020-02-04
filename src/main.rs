@@ -20,13 +20,23 @@ fn run_bot(token: String) -> BotResult<()> {
     let vk = VkApi::new(client, token)?;
     println!("Running {}", vk);
 
+    let img_hasher = img_hash::HasherConfig::new()
+        .hash_alg(img_hash::HashAlg::DoubleGradient)
+        .hash_size(14, 14)
+        .preproc_dct()
+        .to_hasher();
+
     let mut lp = vk.init_long_poll()?;
     loop {
-        lp.poll_once(|u| process_message(&vk, u))?;
+        lp.poll_once(|u| process_message(&vk, u, &img_hasher))?;
     }
 }
 
-fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<()> {
+fn process_message<C: Client>(
+    vk: &VkApi<C>,
+    msg: VkMessage,
+    img_hasher: &img_hash::Hasher,
+) -> BotResult<()> {
     println!("Message: {:?}", msg);
 
     const HASH_FOOD: [u8; 14] = [50, 43, 61, 197, 89, 22, 36, 42, 27, 149, 196, 74, 50, 183];
@@ -41,16 +51,10 @@ fn process_message<C: Client>(vk: &VkApi<C>, msg: VkMessage) -> BotResult<()> {
     } else {
         vk.send_message(msg.from_id, "Дай подумать...")?;
 
-        let hasher = img_hash::HasherConfig::new()
-            .hash_alg(img_hash::HashAlg::DoubleGradient)
-            .hash_size(14, 14)
-            .preproc_dct()
-            .to_hasher();
-
         let mut results: Vec<String> = Vec::new();
         for photo in attachments {
             let image = image::load_from_memory(&vk.fetch_photo(photo)?)?;
-            let hash = hasher.hash_image(&image);
+            let hash = img_hasher.hash_image(&image);
 
             let dist_food = hamming::distance(&HASH_FOOD, hash.as_bytes());
             let dist_wrench = hamming::distance(&HASH_WRENCH, hash.as_bytes());
