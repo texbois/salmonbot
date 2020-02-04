@@ -5,8 +5,6 @@ pub use http::Client;
 pub use long_poll::{VkLongPoll, VkLongPollState};
 pub use types::{VkMessage, VkPhoto};
 
-use serde_json;
-
 pub struct VkApi<C: Client> {
     pub client: C,
     token: String,

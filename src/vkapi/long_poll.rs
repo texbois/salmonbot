@@ -73,12 +73,12 @@ fn try_parse_message(message: &mut JsonValue) -> Option<VkMessage> {
         .get_mut("attachments")
         .and_then(|a| a.as_array_mut())
         .map(|atts| atts.iter_mut().filter_map(try_extract_attachment).collect())
-        .unwrap_or(Vec::new());
+        .unwrap_or_default();
     let forwarded = message
         .get_mut("fwd_messages")
         .and_then(|a| a.as_array_mut())
         .map(|atts| atts.iter_mut().filter_map(try_parse_message).collect())
-        .unwrap_or(Vec::new());
+        .unwrap_or_default();
     let reply_to = message
         .get_mut("reply_message")
         .and_then(try_parse_message)

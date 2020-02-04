@@ -46,7 +46,7 @@ fn process_message<C: Client>(
     const HASH_BIRD: [u8; 14] = [208, 92, 39, 121, 50, 47, 89, 88, 18, 77, 107, 18, 109, 45];
 
     let attachments = msg.all_attachments();
-    if attachments.len() == 0 {
+    if attachments.is_empty() {
         vk.send_message(msg.from_id, "Я тебя не вижу!")
     } else {
         vk.send_message(msg.from_id, "Дай подумать...")?;
