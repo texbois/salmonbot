@@ -53,7 +53,8 @@ fn process_message<C: Client>(
 
         let mut results: Vec<String> = Vec::new();
         for photo in attachments {
-            let image = image::load_from_memory(&vk.fetch_photo(photo)?)?;
+            // Fun fact: VK image previews are JPEGs regardless of the format of the original pic
+            let image = image::load_from_memory_with_format(&vk.fetch_photo(photo)?, image::JPEG)?;
             let hash = img_hasher.hash_image(&image);
 
             let dist_food = hamming::distance(&HASH_FOOD, hash.as_bytes());
