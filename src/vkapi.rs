@@ -1,9 +1,10 @@
 mod http;
 mod long_poll;
+mod photos;
 mod types;
-pub mod photos;
 pub use http::Client;
 pub use long_poll::{VkLongPoll, VkLongPollState};
+pub use photos::VkPhotosApi;
 pub use types::{VkMessage, VkPhoto};
 
 pub struct VkApi<C: Client> {
@@ -68,7 +69,12 @@ impl<C: Client> VkApi<C> {
         )
     }
 
-    pub fn send_message(&self, peer_id: i64, text: &str) -> crate::BotResult<()> {
+    pub fn send_message(
+        &self,
+        peer_id: i64,
+        text: &str,
+        attachment: Option<&str>,
+    ) -> crate::BotResult<()> {
         let random_id = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_millis()
@@ -80,6 +86,7 @@ impl<C: Client> VkApi<C> {
                 ("peer_id", &peer_id.to_string()),
                 ("message", &text),
                 ("random_id", &random_id),
+                ("attachment", attachment.unwrap_or("")),
             ],
             None,
         )?;
