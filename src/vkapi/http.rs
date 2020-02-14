@@ -15,41 +15,42 @@ pub trait Client {
         query: &[(&str, &str)],
         json_response_key: Option<&str>,
     ) -> crate::BotResult<T> {
-        self.get_json(
-            &format!("https://api.vk.com/method/{}", method),
-            &[query, &[("v", "5.103"), ("access_token", token)]].concat(),
-            json_response_key,
-        )
+        let url = format!("https://api.vk.com/method/{}", method);
+        let api_query = [query, &[("v", "5.103"), ("access_token", token)]].concat();
+        let resp = self.fetch(&url, &api_query, &[], None)?;
+        extract_json(&url, &resp, json_response_key)
     }
 
+    #[inline]
     fn get_json<T: serde::de::DeserializeOwned>(
         &self,
         url: &str,
         query: &[(&str, &str)],
         json_response_key: Option<&str>,
     ) -> crate::BotResult<T> {
-        let body = self.fetch(url, query, &[], None)?;
+        let resp = self.fetch(url, query, &[], None)?;
+        extract_json(&url, &resp, json_response_key)
+    }
 
-        println!(
-            "{} | {:?} -> {}",
-            url,
-            query,
-            std::str::from_utf8(&body).unwrap()
-        );
+    fn post_multipart<T: serde::de::DeserializeOwned>(
+        &self,
+        url: &str,
+        field_name: &str,
+        data: &[u8],
+        json_response_key: Option<&str>,
+    ) -> crate::BotResult<T> {
+        let boundary = "-----------------------------img-multipart-boundary";
+        let content_type = format!("multipart/form-data; boundary={}", boundary);
+        let mut body = format!(
+            "{}\r\nContent-Disposition: form-data; name={}\r\n\r\n",
+            boundary, field_name
+        )
+        .into_bytes();
+        body.extend_from_slice(data);
+        body.extend_from_slice(b"\r\n");
 
-        if let Some(key) = json_response_key {
-            serde_json::from_slice::<serde_json::Value>(&body)
-                .map_err(|e| json_error(url, &body, e.into()))?
-                .get_mut(key)
-                .ok_or_else(|| {
-                    json_error(url, &body, format!("Missing response key {}", key).into())
-                })
-                .and_then(|r| {
-                    serde_json::from_value(r.take()).map_err(|e| json_error(url, &body, e.into()))
-                })
-        } else {
-            serde_json::from_slice(&body).map_err(|e| json_error(url, &body, e.into()))
-        }
+        let resp = self.fetch(url, &[], &[("Content-Type", &content_type)], Some(&body))?;
+        extract_json(&url, &resp, json_response_key)
     }
 }
 
@@ -82,6 +83,25 @@ impl Client for ureq::Agent {
         resp.into_reader().read_to_end(&mut data)?;
 
         Ok(data)
+    }
+}
+
+fn extract_json<T: serde::de::DeserializeOwned>(
+    url: &str,
+    body: &[u8],
+    response_key: Option<&str>,
+) -> crate::BotResult<T> {
+    println!("{} -> {}", url, std::str::from_utf8(&body).unwrap());
+    if let Some(key) = response_key {
+        serde_json::from_slice::<serde_json::Value>(body)
+            .map_err(|e| json_error(url, body, e.into()))?
+            .get_mut(key)
+            .ok_or_else(|| json_error(url, body, format!("Missing response key {}", key).into()))
+            .and_then(|r| {
+                serde_json::from_value(r.take()).map_err(|e| json_error(url, body, e.into()))
+            })
+    } else {
+        serde_json::from_slice(&body).map_err(|e| json_error(url, body, e.into()))
     }
 }
 
