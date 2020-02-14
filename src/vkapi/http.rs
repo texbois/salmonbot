@@ -1,5 +1,11 @@
 pub trait Client {
-    fn fetch(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<Vec<u8>>;
+    fn fetch(
+        &self,
+        url: &str,
+        query: &[(&str, &str)],
+        headers: &[(&str, &str)],
+        body: Option<&[u8]>,
+    ) -> crate::BotResult<Vec<u8>>;
 
     #[inline]
     fn call_api<T: serde::de::DeserializeOwned>(
@@ -22,7 +28,15 @@ pub trait Client {
         query: &[(&str, &str)],
         json_response_key: Option<&str>,
     ) -> crate::BotResult<T> {
-        let body = self.fetch(url, query)?;
+        let body = self.fetch(url, query, &[], None)?;
+
+        println!(
+            "{} | {:?} -> {}",
+            url,
+            query,
+            std::str::from_utf8(&body).unwrap()
+        );
+
         if let Some(key) = json_response_key {
             serde_json::from_slice::<serde_json::Value>(&body)
                 .map_err(|e| json_error(url, &body, e.into()))?
@@ -40,14 +54,30 @@ pub trait Client {
 }
 
 impl Client for ureq::Agent {
-    fn fetch(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<Vec<u8>> {
+    fn fetch(
+        &self,
+        url: &str,
+        query: &[(&str, &str)],
+        headers: &[(&str, &str)],
+        body: Option<&[u8]>,
+    ) -> crate::BotResult<Vec<u8>> {
         use std::io::Read;
 
-        let mut request = self.get(url);
-        for (k, v) in query {
-            request.query(k, v);
+        let mut request = match body {
+            Some(_) => self.post(url),
+            _ => self.get(url),
+        };
+        for (param, v) in query {
+            request.query(param, v);
         }
-        let resp = request.timeout_connect(5_000).timeout_read(30_000).call();
+        for (header, v) in headers {
+            request.set(header, v);
+        }
+        request.timeout_connect(5_000).timeout_read(30_000);
+        let resp = match body {
+            Some(data) => request.send_bytes(data),
+            _ => request.call(),
+        };
         let mut data = Vec::new();
         resp.into_reader().read_to_end(&mut data)?;
 
@@ -88,6 +118,8 @@ pub mod test_client {
     struct ClientFixture {
         url: String,
         query: HashMap<String, String>,
+        headers: Option<HashMap<String, String>>,
+        body: Option<Vec<u8>>,
         response: serde_json::Value,
     }
 
@@ -101,20 +133,33 @@ pub mod test_client {
     }
 
     impl Client for TestClient {
-        fn fetch(&self, url: &str, query: &[(&str, &str)]) -> crate::BotResult<Vec<u8>> {
-            let expected = self.fixtures.borrow_mut().pop_front();
+        fn fetch(
+            &self,
+            url: &str,
+            query: &[(&str, &str)],
+            headers: &[(&str, &str)],
+            body: Option<&[u8]>,
+        ) -> crate::BotResult<Vec<u8>> {
             let query_map: HashMap<String, String> =
                 HashMap::from_iter(query.iter().map(|(k, v)| (k.to_string(), v.to_string())));
-            if let Some(ref fixture) = expected {
-                if fixture.url == url && fixture.query == query_map {
-                    return Ok(serde_json::to_vec(&fixture.response).unwrap());
+            let header_map: HashMap<String, String> =
+                HashMap::from_iter(headers.iter().map(|(k, v)| (k.to_string(), v.to_string())));
+            let expected = self.fixtures.borrow_mut().pop_front();
+            match expected {
+                Some(ref fixture)
+                    if url == fixture.url
+                        && query_map == fixture.query
+                        && &header_map == fixture.headers.as_ref().unwrap_or(&HashMap::new())
+                        && body == fixture.body.as_ref().map(|b| &b[..]) =>
+                {
+                    Ok(serde_json::to_vec(&fixture.response).unwrap())
                 }
+                _ => Err(format!(
+                    "Expected request: {:?}, got: {:?} {:?} {:?} {:?}",
+                    expected, url, query, headers, body
+                )
+                .into()),
             }
-            Err(format!(
-                "Expected request: {:?}, got: {:?} {:?}",
-                expected, url, query
-            )
-            .into())
         }
     }
 }

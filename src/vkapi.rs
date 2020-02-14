@@ -91,6 +91,6 @@ impl<C: Client> VkApi<C> {
     }
 
     pub fn fetch_photo(&self, photo: &VkPhoto) -> crate::BotResult<Vec<u8>> {
-        self.client.fetch(&photo.0, &[])
+        self.client.fetch(&photo.0, &[], &[], None)
     }
 }
