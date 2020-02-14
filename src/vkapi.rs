@@ -1,6 +1,7 @@
 mod http;
 mod long_poll;
 mod types;
+pub mod photos;
 pub use http::Client;
 pub use long_poll::{VkLongPoll, VkLongPollState};
 pub use types::{VkMessage, VkPhoto};

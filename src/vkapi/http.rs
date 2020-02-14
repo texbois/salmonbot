@@ -37,18 +37,21 @@ pub trait Client {
         url: &str,
         field_name: &str,
         data: &[u8],
+        data_ext: &str, // thank you vk for ignoring content-type and requiring file extensions
         json_response_key: Option<&str>,
     ) -> crate::BotResult<T> {
-        let boundary = "-----------------------------img-multipart-boundary";
-        let content_type = format!("multipart/form-data; boundary={}", boundary);
+        let boundary = "----------------------------ImbotMultipartBoundary";
         let mut body = format!(
-            "{}\r\nContent-Disposition: form-data; name={}\r\n\r\n",
-            boundary, field_name
+            "--{}\r\nContent-Disposition: form-data; name=\"{}\"; filename=\"file.{}\"\r\n\r\n",
+            boundary, field_name, data_ext
         )
         .into_bytes();
         body.extend_from_slice(data);
-        body.extend_from_slice(b"\r\n");
+        body.extend_from_slice(b"\r\n--");
+        body.extend_from_slice(boundary.as_bytes());
+        body.extend_from_slice(b"--");
 
+        let content_type = format!("multipart/form-data;boundary={}", boundary);
         let resp = self.fetch(url, &[], &[("Content-Type", &content_type)], Some(&body))?;
         extract_json(&url, &resp, json_response_key)
     }
@@ -139,7 +142,6 @@ pub mod test_client {
         url: String,
         query: HashMap<String, String>,
         headers: Option<HashMap<String, String>>,
-        body: Option<Vec<u8>>,
         response: serde_json::Value,
     }
 
@@ -169,8 +171,7 @@ pub mod test_client {
                 Some(ref fixture)
                     if url == fixture.url
                         && query_map == fixture.query
-                        && &header_map == fixture.headers.as_ref().unwrap_or(&HashMap::new())
-                        && body == fixture.body.as_ref().map(|b| &b[..]) =>
+                        && &header_map == fixture.headers.as_ref().unwrap_or(&HashMap::new()) =>
                 {
                     Ok(serde_json::to_vec(&fixture.response).unwrap())
                 }

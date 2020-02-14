@@ -1,0 +1,60 @@
+[
+  {
+    "url": "https://api.vk.com/method/photos.getMessagesUploadServer",
+    "query": {
+      "peer_id": "101",
+      "v": "5.103",
+      "access_token": "token"
+    },
+    "response": {
+      "response": {
+        "album_id": -1,
+        "upload_url": "https:\/\/pu.vk.com\/upload.php?act=do_add",
+        "user_id": 0,
+        "group_id": 1001
+      }
+    }
+  },
+  {
+    "url": "https://pu.vk.com/upload.php?act=do_add",
+    "query": {},
+    "headers": {
+      "Content-Type": "multipart/form-data;boundary=----------------------------ImbotMultipartBoundary"
+    },
+    "response": {
+      "server": 10,
+      "photo": "[{\"json_photo_obj\":true}]",
+      "hash": "hash"
+    }
+  },
+  {
+    "url": "https://api.vk.com/method/photos.saveMessagesPhoto",
+    "query": {
+      "server": "10",
+      "photo": "[{\"json_photo_obj\":true}]",
+      "hash": "hash",
+      "v": "5.103",
+      "access_token": "token"
+    },
+    "response": {
+      "response": [
+        {
+          "id": 7777777,
+          "album_id": -10,
+          "owner_id": 101,
+          "sizes": [
+            {
+              "type": "s",
+              "url": "$small_url",
+              "width": 75,
+              "height": 56
+            }
+          ],
+          "text": "",
+          "date": 1581714551,
+          "access_key": "key"
+        }
+      ]
+    }
+  }
+]
