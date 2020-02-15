@@ -23,7 +23,7 @@ impl Behavior for ChestBehavior {
 
         let attachments = msg.all_attachments();
         for att in attachments {
-            let image = vk.fetch_photo(att)?;
+            let image = vk.download_photo(att)?;
             let hash = self.matcher.hash(&image)?;
             if ImageMatcher::matches(HASH_WRENCH, hash) {
                 return vk.send_message(msg.from_id, ">", Some(&reply_attachment));

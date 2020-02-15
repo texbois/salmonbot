@@ -1,9 +1,10 @@
-use crate::vkapi::{Client, VkApi};
+use crate::vkapi::{Client, VkApi, VkPhoto};
 use crate::BotResult;
 use serde_derive::Deserialize;
 use std::path::Path;
 
 pub trait VkPhotosApi {
+    fn download_photo(&self, photo: &VkPhoto) -> BotResult<Vec<u8>>;
     fn upload_message_photo<P: AsRef<Path>>(&self, peer_id: i64, path: P) -> BotResult<String>;
 }
 
@@ -15,6 +16,10 @@ pub struct VkPhotoUploadResponse {
 }
 
 impl<C: Client> VkPhotosApi for VkApi<C> {
+    fn download_photo(&self, photo: &VkPhoto) -> BotResult<Vec<u8>> {
+        self.client.fetch(&photo.0, &[], &[], None)
+    }
+
     fn upload_message_photo<P: AsRef<Path>>(&self, peer_id: i64, path: P) -> BotResult<String> {
         let image_ext = path
             .as_ref()
@@ -26,8 +31,7 @@ impl<C: Client> VkPhotosApi for VkApi<C> {
         let upload: VkPhotoUploadResponse =
             self.client
                 .post_multipart(&upload_url, "photo", &image, image_ext, None)?;
-        let media: serde_json::Value = self.client.call_api(
-            &self.token,
+        let media: serde_json::Value = self.call_api(
             "photos.saveMessagesPhoto",
             &[
                 ("server", &upload.server.to_string()),
@@ -55,8 +59,7 @@ impl<C: Client> VkPhotosApi for VkApi<C> {
 }
 
 fn get_upload_url<C: Client>(vk: &VkApi<C>, peer_id: i64) -> BotResult<String> {
-    let mut server: serde_json::Value = vk.client.call_api(
-        &vk.token,
+    let mut server: serde_json::Value = vk.call_api(
         "photos.getMessagesUploadServer",
         &[("peer_id", &peer_id.to_string())],
         Some("response"),

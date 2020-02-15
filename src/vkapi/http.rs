@@ -8,20 +8,6 @@ pub trait Client {
     ) -> crate::BotResult<Vec<u8>>;
 
     #[inline]
-    fn call_api<T: serde::de::DeserializeOwned>(
-        &self,
-        token: &str,
-        method: &str,
-        query: &[(&str, &str)],
-        json_response_key: Option<&str>,
-    ) -> crate::BotResult<T> {
-        let url = format!("https://api.vk.com/method/{}", method);
-        let api_query = [query, &[("v", "5.103"), ("access_token", token)]].concat();
-        let resp = self.fetch(&url, &api_query, &[], None)?;
-        extract_json(&url, &resp, json_response_key)
-    }
-
-    #[inline]
     fn get_json<T: serde::de::DeserializeOwned>(
         &self,
         url: &str,

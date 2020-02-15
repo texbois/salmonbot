@@ -24,10 +24,22 @@ impl<C: Client> std::fmt::Display for VkApi<C> {
     }
 }
 
+#[inline]
+fn api_request<'a>(
+    method: &str,
+    query: &[(&'a str, &'a str)],
+    token: &'a str,
+) -> (String, Vec<(&'a str, &'a str)>) {
+    let url = format!("https://api.vk.com/method/{}", method);
+    let api_query = [query, &[("v", "5.103"), ("access_token", token)]].concat();
+    (url, api_query)
+}
+
 impl<C: Client> VkApi<C> {
     pub fn new(client: C, token: String) -> crate::BotResult<Self> {
+        let (comm_url, comm_query) = api_request("groups.getById", &[], &token);
         let communities: serde_json::Value =
-            client.call_api(&token, "groups.getById", &[], Some("response"))?;
+            client.get_json(&comm_url, &comm_query, Some("response"))?;
 
         let mut community = match communities {
             serde_json::Value::Array(mut comms) if comms.len() == 1 => comms.remove(0),
@@ -56,17 +68,14 @@ impl<C: Client> VkApi<C> {
         })
     }
 
-    pub fn init_long_poll<'a>(&'a self) -> crate::BotResult<VkLongPoll<'a, C>> {
-        VkLongPoll::init(self)
-    }
-
-    pub fn init_long_poll_state(&self) -> crate::BotResult<VkLongPollState> {
-        self.client.call_api(
-            &self.token,
-            "groups.getLongPollServer",
-            &[("group_id", &self.community_id)],
-            Some("response"),
-        )
+    fn call_api<T: serde::de::DeserializeOwned>(
+        &self,
+        method: &str,
+        query: &[(&str, &str)],
+        json_response_key: Option<&str>,
+    ) -> crate::BotResult<T> {
+        let (url, api_query) = api_request(method, query, &self.token);
+        self.client.get_json(&url, &api_query, json_response_key)
     }
 
     pub fn send_message(
@@ -79,8 +88,7 @@ impl<C: Client> VkApi<C> {
             .duration_since(std::time::UNIX_EPOCH)?
             .as_millis()
             .to_string();
-        let resp: serde_json::Value = self.client.call_api(
-            &self.token,
+        let resp: serde_json::Value = self.call_api(
             "messages.send",
             &[
                 ("peer_id", &peer_id.to_string()),
@@ -96,9 +104,5 @@ impl<C: Client> VkApi<C> {
         } else {
             Ok(())
         }
-    }
-
-    pub fn fetch_photo(&self, photo: &VkPhoto) -> crate::BotResult<Vec<u8>> {
-        self.client.fetch(&photo.0, &[], &[], None)
     }
 }

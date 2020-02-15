@@ -1,7 +1,7 @@
 #![recursion_limit = "256"]
 
 mod vkapi;
-use vkapi::VkApi;
+use vkapi::{VkApi, VkLongPoll};
 mod behavior;
 use behavior::{Behavior, ChestBehavior};
 mod img_match;
@@ -25,7 +25,7 @@ fn run_bot(token: String) -> BotResult<()> {
 
     let mut behavior = ChestBehavior::new();
 
-    let mut lp = vk.init_long_poll()?;
+    let mut lp = VkLongPoll::init(&vk)?;
     loop {
         lp.poll_once(|msg| {
             // TODO: better logging

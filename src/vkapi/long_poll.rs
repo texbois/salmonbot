@@ -14,9 +14,17 @@ pub struct VkLongPollState {
     ts: String,
 }
 
+fn get_long_poll_state<C: Client>(vk: &VkApi<C>) -> crate::BotResult<VkLongPollState> {
+    vk.call_api(
+        "groups.getLongPollServer",
+        &[("group_id", &vk.community_id)],
+        Some("response"),
+    )
+}
+
 impl<'a, C: Client> VkLongPoll<'a, C> {
     pub fn init(api: &'a VkApi<C>) -> crate::BotResult<VkLongPoll<'a, C>> {
-        let state = api.init_long_poll_state()?;
+        let state = get_long_poll_state(api)?;
         Ok(Self { state, api })
     }
 
@@ -37,7 +45,7 @@ impl<'a, C: Client> VkLongPoll<'a, C> {
 
         if let Some(err) = resp.get("failed").and_then(|e| e.as_u64()) {
             if err < 4 {
-                self.state = self.api.init_long_poll_state()?;
+                self.state = get_long_poll_state(self.api)?;
                 Ok(())
             } else {
                 Err(format!("Long poll request failed: {:?}", resp).into())
