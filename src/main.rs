@@ -6,6 +6,8 @@ mod behavior;
 use behavior::{Behavior, ChestBehavior};
 mod img_match;
 
+pub const MSG_DELAY: std::time::Duration = std::time::Duration::from_millis(4800);
+
 pub type BotResult<T> = Result<T, Box<dyn std::error::Error>>;
 
 fn main() {

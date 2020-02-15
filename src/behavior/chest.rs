@@ -1,7 +1,12 @@
 use crate::behavior::Behavior;
 use crate::img_match::ImageMatcher;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkOutboundMessage, VkPhotosApi};
-use crate::BotResult;
+use crate::{BotResult, MSG_DELAY};
+
+const SUCCESS_IMG: &'static str = "tests/fixtures/test.jpg";
+const SUCCESS_TEXT: &'static str =
+    "Внутри сундука ты нашел это! Покажи сообщение в канцелярии, чтобы получить награду";
+const FAIL_TEXT: &'static str = "Ничего не произошло";
 
 pub struct ChestBehavior {
     matcher: ImageMatcher,
@@ -19,21 +24,24 @@ impl Behavior for ChestBehavior {
             220, 149, 201, 150, 157, 70, 121, 74, 100, 98, 218, 101, 142, 77,
         ];
 
-        let reply_photo = vk.upload_message_photo(msg.from_id, "tests/fixtures/test.jpg")?;
-
         let attachments = msg.all_attachments();
         for att in attachments {
             let image = vk.download_photo(att)?;
             let hash = self.matcher.hash(&image)?;
             if ImageMatcher::matches(HASH_WRENCH, hash) {
-                return vk.send(&VkOutboundMessage::media(
-                    msg.from_id,
-                    ">".into(),
-                    reply_photo,
-                ));
+                let photo = vk.upload_message_photo(msg.from_id, SUCCESS_IMG)?;
+                vk.send_with_delay(
+                    VkOutboundMessage::media(msg.from_id, String::from(SUCCESS_TEXT), photo),
+                    MSG_DELAY,
+                );
+                return Ok(());
             }
         }
 
-        vk.send(&VkOutboundMessage::text(msg.from_id, "?".into()))
+        vk.send_with_delay(
+            VkOutboundMessage::text(msg.from_id, String::from(FAIL_TEXT)),
+            MSG_DELAY,
+        );
+        Ok(())
     }
 }
