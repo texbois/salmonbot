@@ -1,4 +1,4 @@
-pub trait Client {
+pub trait Client: Send + Clone + 'static {
     fn fetch(
         &self,
         url: &str,
@@ -115,12 +115,14 @@ pub use test_client::TestClient;
 pub mod test_client {
     use crate::vkapi::http::Client;
     use serde_derive::Deserialize;
+    use std::cell::RefCell;
     use std::collections::{HashMap, VecDeque};
     use std::iter::FromIterator;
+    use std::sync::{Arc, Mutex};
 
-    #[derive(Debug)]
+    #[derive(Clone, Debug)]
     pub struct TestClient {
-        fixtures: std::cell::RefCell<VecDeque<ClientFixture>>,
+        fixtures: Arc<Mutex<RefCell<VecDeque<ClientFixture>>>>,
     }
 
     #[derive(Debug, Deserialize)]
@@ -135,7 +137,7 @@ pub mod test_client {
         pub fn new(fixture: &str) -> Self {
             let path = format!("{}/tests/fixtures/{}", env!("CARGO_MANIFEST_DIR"), fixture);
             let file = std::fs::File::open(&path).expect(&format!("Failed to open {}", path));
-            let fixtures = serde_json::from_reader(file).unwrap();
+            let fixtures = Arc::new(serde_json::from_reader(file).unwrap());
             Self { fixtures }
         }
     }
@@ -152,7 +154,7 @@ pub mod test_client {
                 HashMap::from_iter(query.iter().map(|(k, v)| (k.to_string(), v.to_string())));
             let header_map: HashMap<String, String> =
                 HashMap::from_iter(headers.iter().map(|(k, v)| (k.to_string(), v.to_string())));
-            let expected = self.fixtures.borrow_mut().pop_front();
+            let expected = self.fixtures.lock().unwrap().borrow_mut().pop_front();
             match expected {
                 Some(ref fixture)
                     if url == fixture.url

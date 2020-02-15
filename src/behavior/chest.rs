@@ -1,6 +1,6 @@
 use crate::behavior::Behavior;
 use crate::img_match::ImageMatcher;
-use crate::vkapi::{Client, VkApi, VkMessage, VkPhotosApi};
+use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkOutboundMessage, VkPhotosApi};
 use crate::BotResult;
 
 pub struct ChestBehavior {
@@ -19,17 +19,21 @@ impl Behavior for ChestBehavior {
             220, 149, 201, 150, 157, 70, 121, 74, 100, 98, 218, 101, 142, 77,
         ];
 
-        let reply_attachment = vk.upload_message_photo(msg.from_id, "tests/fixtures/test.jpg")?;
+        let reply_photo = vk.upload_message_photo(msg.from_id, "tests/fixtures/test.jpg")?;
 
         let attachments = msg.all_attachments();
         for att in attachments {
             let image = vk.download_photo(att)?;
             let hash = self.matcher.hash(&image)?;
             if ImageMatcher::matches(HASH_WRENCH, hash) {
-                return vk.send_message(msg.from_id, ">", Some(&reply_attachment));
+                return vk.send(&VkOutboundMessage::media(
+                    msg.from_id,
+                    ">".into(),
+                    reply_photo,
+                ));
             }
         }
 
-        vk.send_message(msg.from_id, "!", Some(&reply_attachment))
+        vk.send(&VkOutboundMessage::text(msg.from_id, "?".into()))
     }
 }

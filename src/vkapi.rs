@@ -1,12 +1,15 @@
 mod http;
 mod long_poll;
+mod messages;
 mod photos;
 mod types;
 pub use http::Client;
 pub use long_poll::{VkLongPoll, VkLongPollState};
+pub use messages::{VkMessagesApi, VkOutboundMessage};
 pub use photos::VkPhotosApi;
 pub use types::{VkMessage, VkPhoto};
 
+#[derive(Clone)]
 pub struct VkApi<C: Client> {
     pub client: C,
     token: String,
@@ -76,33 +79,5 @@ impl<C: Client> VkApi<C> {
     ) -> crate::BotResult<T> {
         let (url, api_query) = api_request(method, query, &self.token);
         self.client.get_json(&url, &api_query, json_response_key)
-    }
-
-    pub fn send_message(
-        &self,
-        peer_id: i64,
-        text: &str,
-        attachment: Option<&str>,
-    ) -> crate::BotResult<()> {
-        let random_id = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)?
-            .as_millis()
-            .to_string();
-        let resp: serde_json::Value = self.call_api(
-            "messages.send",
-            &[
-                ("peer_id", &peer_id.to_string()),
-                ("message", &text),
-                ("random_id", &random_id),
-                ("attachment", attachment.unwrap_or("")),
-            ],
-            None,
-        )?;
-
-        if let Some(error) = resp.get("error") {
-            Err(format!("messages.send returned an error: {}", error).into())
-        } else {
-            Ok(())
-        }
     }
 }
