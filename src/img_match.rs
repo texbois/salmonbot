@@ -18,7 +18,7 @@ impl ImageMatcher {
 
     pub fn hash(&self, vk_image: &[u8]) -> BotResult<img_hash::ImageHash> {
         // Fun fact: VK image previews are JPEGs regardless of the format of the original pic
-        let image = image::load_from_memory_with_format(vk_image, image::JPEG)?;
+        let image = image::load_from_memory_with_format(vk_image, image::ImageFormat::Jpeg)?;
         let image_hash = self.hasher.hash_image(&image);
         Ok(image_hash)
     }
