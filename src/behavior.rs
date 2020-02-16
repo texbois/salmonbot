@@ -1,11 +1,13 @@
 use crate::vkapi::{Client, VkApi, VkMessage};
 
 mod chest;
-mod stone;
-mod test;
 pub use chest::ChestBehavior;
+mod stone;
 pub use stone::StoneBehavior;
+mod test;
 pub use test::TestBehavior;
+mod gates;
+pub use gates::GatesBehavior;
 
 pub type ThreadResult<'e> = Result<(), Box<dyn std::error::Error + 'e>>;
 
