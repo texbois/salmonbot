@@ -3,11 +3,11 @@
 mod vkapi;
 use vkapi::{Client, VkApi, VkLongPoll, VkMessage};
 mod behavior;
-use behavior::{Behavior, ChestBehavior};
+use behavior::{Behavior, ChestBehavior, TestBehavior};
 mod img_match;
 mod storage;
 
-use std::{error::Error, sync::Arc, time::Duration};
+use std::{env, error::Error, sync::Arc, time::Duration};
 
 pub const MSG_DELAY: Duration = Duration::from_millis(4800);
 
@@ -27,23 +27,39 @@ impl<C: Client> std::fmt::Display for Bot<C> {
 }
 
 fn main() {
-    let token = std::env::var("COMMUNITY_TOKEN")
+    let args: Vec<String> = env::args().collect();
+    let token = env::var("COMMUNITY_TOKEN")
         .expect("Provide a valid API token via the COMMUNITY_TOKEN environment variable");
 
-    match run_bot(token) {
+    println!("Booting up...");
+
+    match make_bot(args, token).and_then(run_bot) {
         Ok(_) => (),
         Err(err) => eprintln!("Error: {}", err),
     }
 }
 
-fn run_bot(token: String) -> BotResult<()> {
-    println!("Booting up...");
+fn make_bot(args: Vec<String>, token: String) -> BotResult<Arc<Bot<ureq::Agent>>> {
+    let storage = storage::Storage::new(REDIS_URL)?;
+    let vk = VkApi::new(ureq::agent(), token)?;
+    let behavior: Box<dyn Behavior<ureq::Agent>> = match args.get(1).map(|a| a.as_str()) {
+        Some("chest") => Box::new(ChestBehavior::new(storage)),
+        Some("test") => Box::new(TestBehavior::new()),
+        _ => {
+            return Err(format!(
+                r#"No behavior specified.
+Usage: {} behavior
+    where `behavior` is one of the challenges (`chest`, ...)
+    or `test` to reply with hashes of received images."#,
+                args[0]
+            )
+            .into())
+        }
+    };
+    Ok(Arc::new(Bot { vk, behavior }))
+}
 
-    let bot = Arc::new(Bot {
-        vk: VkApi::new(ureq::agent(), token)?,
-        behavior: Box::new(ChestBehavior::new(REDIS_URL)?),
-    });
-
+fn run_bot(bot: Arc<Bot<ureq::Agent>>) -> BotResult<()> {
     println!("{}", bot);
 
     let mut lp = VkLongPoll::init(&bot.vk)?;

@@ -1,8 +1,8 @@
-use crate::behavior::Behavior;
+use crate::behavior::{Behavior, ThreadResult};
 use crate::img_match::ImageMatcher;
 use crate::storage::Storage;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
-use crate::{behavior::ThreadResult, BotResult, MSG_DELAY};
+use crate::MSG_DELAY;
 
 const SUCCESS_IMG: &'static str = "tests/fixtures/test.jpg";
 const SUCCESS_TEXT: &'static str =
@@ -20,11 +20,9 @@ pub struct ChestBehavior {
 }
 
 impl ChestBehavior {
-    pub fn new(redis_url: &str) -> BotResult<Self> {
-        Ok(Self {
-            matcher: ImageMatcher::new(),
-            storage: Storage::new(redis_url)?,
-        })
+    pub fn new(storage: Storage) -> Self {
+        let matcher = ImageMatcher::new();
+        Self { matcher, storage }
     }
 }
 
@@ -40,8 +38,7 @@ impl<C: Client> Behavior<C> for ChestBehavior {
             return Ok(());
         }
 
-        let attachments = msg.all_attachments();
-        for att in attachments {
+        for att in msg.all_attachments() {
             let image = vk.download_photo(att)?;
             let hash = self.matcher.hash(&image)?;
             if ImageMatcher::matches(HASH_WRENCH, hash) {
