@@ -20,7 +20,7 @@ impl<C: Client> std::fmt::Display for VkApi<C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Vk community bot ({}, id {})",
+            "Community \"{}\" (id {})",
             self.community_name, self.community_id
         )
     }

@@ -20,6 +20,12 @@ impl ChestBehavior {
     }
 }
 
+impl std::fmt::Display for ChestBehavior {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Chest")
+    }
+}
+
 impl<C: Client> Behavior<C> for ChestBehavior {
     fn process_on_own_thread(&self, vk: &VkApi<C>, msg: &VkMessage) -> BotResult<()> {
         const HASH_WRENCH: [u8; 14] = [
