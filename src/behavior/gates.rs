@@ -2,9 +2,9 @@ use crate::behavior::{Behavior, ThreadResult};
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi};
 use crate::storage::Storage;
 
-const SUCCESS_TEXT: &'static str = "RIGHT.";
-const FAIL_TEXT: &'static str = "WRONG.";
-const ANSWER: &'static str = "123456789";
+const SUCCESS_TEXT: &str = "RIGHT.";
+const FAIL_TEXT: &str = "WRONG.";
+const ANSWER: &str = "123456789";
 
 pub struct GatesBehavior {
     storage: Storage,

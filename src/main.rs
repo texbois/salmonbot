@@ -3,11 +3,8 @@
 mod vkapi;
 use vkapi::{Client, VkApi, VkLongPoll, VkMessage};
 mod behavior;
-<<<<<<< HEAD
-use behavior::{Behavior, ChestBehavior, TestBehavior, StoneBehavior};
-=======
+use behavior::{Behavior, ChestBehavior, TestBehavior, StoneBehavior, GatesBehavior};
 use behavior::{Behavior, ChestBehavior, TestBehavior, GatesBehavior};
->>>>>>> added simple gates behavior
 mod img_match;
 mod storage;
 
