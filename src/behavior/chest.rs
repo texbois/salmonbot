@@ -41,7 +41,7 @@ impl<C: Client> Behavior<C> for ChestBehavior {
         for att in msg.all_attachments() {
             let image = vk.download_photo(att)?;
             let hash = self.matcher.hash(&image)?;
-            if ImageMatcher::matches(HASH_WRENCH, hash) {
+            if ImageMatcher::matches(&HASH_WRENCH, &hash) {
                 let photo = vk.upload_message_photo(msg.from_id, SUCCESS_IMG)?;
                 let completed_cnt = self.storage.set_add(STORAGE_COMPL_SET, msg.from_id)?;
 
