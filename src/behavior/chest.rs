@@ -8,8 +8,8 @@ const SUCCESS_IMG: (&[u8], &str) = (include_bytes!("../../static/chest_success.j
 const SUCCESS_TEXT: &str =
     "Внутри сундука ты нашел это! Покажи сообщение в канцелярии, чтобы получить награду";
 const FAIL_TEXT: &str = "Ничего не произошло";
-const HASH_WRENCH: [u8; 14] = [
-    220, 149, 201, 150, 157, 70, 121, 74, 100, 98, 218, 101, 142, 77,
+const HASH_WRENCH: [u8; 18] = [
+    220, 171, 38, 54, 217, 211, 81, 60, 164, 202, 200, 137, 211, 93, 76, 99, 38, 148,
 ];
 
 pub const STORAGE_COMPL_SET: &str = "chest_completed_by";

@@ -1,6 +1,6 @@
 use crate::BotResult;
 
-const HAMMING_TOLERANCE: u64 = 3;
+const HAMMING_TOLERANCE: u64 = 7;
 
 pub struct ImageMatcher {
     hasher: img_hash::Hasher,
@@ -10,7 +10,7 @@ impl ImageMatcher {
     pub fn new() -> Self {
         let hasher = img_hash::HasherConfig::new()
             .hash_alg(img_hash::HashAlg::DoubleGradient)
-            .hash_size(14, 14)
+            .hash_size(15, 15)
             .preproc_dct()
             .to_hasher();
         Self { hasher }

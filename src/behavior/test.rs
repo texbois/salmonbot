@@ -28,7 +28,21 @@ impl<C: Client> Behavior<C> for TestBehavior {
         for att in attachments {
             let image = vk.download_photo(att)?;
             let hash = self.matcher.hash(&image)?;
-            vk.send(msg.from_id, &format!("Hash: {:?}", hash.as_bytes()), None)?;
+
+            use std::fmt::Write;
+            let mut reply = format!("Hash: {:?}", hash.as_bytes());
+            for letters in crate::behavior::stone::STAGE_HASHES.iter() {
+                for (letter, letter_hash) in letters.iter() {
+                    write!(
+                        &mut reply,
+                        ", -> {}: {}",
+                        letter,
+                        hamming::distance(letter_hash, hash.as_bytes())
+                    )
+                    .unwrap();
+                }
+            }
+            vk.send(msg.from_id, &reply, None)?;
         }
         Ok(())
     }
