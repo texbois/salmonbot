@@ -80,7 +80,6 @@ fn extract_json<T: serde::de::DeserializeOwned>(
     body: &[u8],
     response_key: Option<&str>,
 ) -> crate::BotResult<T> {
-    println!("{} -> {}", url, std::str::from_utf8(&body).unwrap());
     if let Some(key) = response_key {
         serde_json::from_slice::<serde_json::Value>(body)
             .map_err(|e| json_error(url, body, e.into()))?

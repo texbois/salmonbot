@@ -32,7 +32,7 @@ fn api_request<'a>(
     query: &[(&'a str, &'a str)],
     token: &'a str,
 ) -> (String, Vec<(&'a str, &'a str)>) {
-    let url = format!("https://api.vk.com/method/{}", method);
+    let url = ["https://api.vk.com/method/", method].concat();
     let api_query = [query, &[("v", "5.103"), ("access_token", token)]].concat();
     (url, api_query)
 }

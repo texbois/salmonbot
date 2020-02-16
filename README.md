@@ -29,6 +29,37 @@ cargo run -- <behavior>
 
 see below for a list of available behaviors
 
+## deployment
+
+prepare the server:
+
+1. `apt-get install redis`
+2. `vim /etc/redis/redis.conf`:
+    * navigate to the *append only mode* section and set `appendonly` to `yes`.
+      it is a good idea to keep both `AOF` and `RDB` (only the latter is enabled by default).
+3. `service redis restart`
+4. create a shell script to make the bot ｒｅｓｉｌｉｅｎｔ to failures:
+    ```bash
+    #/bin/bash
+
+    echo "Starting salmonbot $1, log file: salmon-$1.log (append mode)"
+
+    while true; do
+      ./salmonbot $1 2>&1 | tee -a salmon-$1.log
+      echo "Panic encountered (exit code $?), restarting the bot..."
+    done
+    ```
+
+build the bot and upload it:
+1. `cargo build --release` (might take a few minutes)
+2. `scp target/release/salmonbot ocean:~`
+
+run it:
+1. `ssh ocean`
+2. `./hacky-shell-script.sh <behavior>`
+
+pray
+
 ## behaviors
 
 #### chest

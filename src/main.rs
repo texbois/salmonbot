@@ -32,10 +32,8 @@ fn main() {
         .expect("Provide a valid API token via the COMMUNITY_TOKEN environment variable");
 
     println!("Booting up...");
-
-    match make_bot(args, token).and_then(run_bot) {
-        Ok(_) => (),
-        Err(err) => eprintln!("Error: {}", err),
+    if let Err(err) = make_bot(args, token).and_then(run_bot) {
+        eprintln!("Error: {}", err);
     }
 }
 
@@ -68,8 +66,6 @@ fn run_bot(bot: Arc<Bot<ureq::Agent>>) -> BotResult<()> {
     let mut lp = VkLongPoll::init(&bot.vk)?;
     loop {
         lp.poll_once(|msg| {
-            // TODO: better logging
-            println!("Message: {:?}", msg);
             spawn_message_handler(bot.clone(), msg);
             Ok(())
         })?;
