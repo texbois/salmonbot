@@ -1,6 +1,7 @@
 use crate::behavior::Behavior;
 use crate::img_match::ImageMatcher;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
+use crate::storage::Storage;
 use crate::{BotResult, MSG_DELAY};
 
 const SUCCESS_IMG: &'static str = "tests/fixtures/test.jpg";
@@ -10,13 +11,15 @@ const FAIL_TEXT: &'static str = "Ничего не произошло";
 
 pub struct ChestBehavior {
     matcher: ImageMatcher,
+    storage: Storage
 }
 
 impl ChestBehavior {
-    pub fn new() -> Self {
-        Self {
+    pub fn new(redis_url: &str) -> BotResult<Self> {
+        Ok(Self {
             matcher: ImageMatcher::new(),
-        }
+            storage: Storage::new(redis_url)?
+        })
     }
 }
 

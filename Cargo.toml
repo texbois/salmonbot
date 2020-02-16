@@ -13,6 +13,8 @@ image = { version = "0.23", features = ["jpeg", "jpeg_rayon"] }
 img_hash = { git = "https://github.com/CryZe/img_hash", rev = "4cadae9e2607afa63965c7112a34ee27880a25ac" }
 hamming = "0.1"
 lazy_static = "1.4"
+# https://github.com/mitsuhiko/redis-rs/pull/272
+redis = { git = "https://github.com/Marwes/redis-rs", branch = "combine-4", default-features = false }
 
 [patch.crates-io]
 rustdct = { git = "https://github.com/ejmahler/rust_dct" }

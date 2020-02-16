@@ -5,12 +5,15 @@ use vkapi::{Client, VkApi, VkLongPoll, VkMessage};
 mod behavior;
 use behavior::{Behavior, ChestBehavior};
 mod img_match;
+mod storage;
 
 use std::{error::Error, sync::Arc, time::Duration};
 
 pub const MSG_DELAY: Duration = Duration::from_millis(4800);
 
 pub type BotResult<T> = Result<T, Box<dyn Error>>;
+
+const REDIS_URL: &'static str = "redis://127.0.0.1/";
 
 struct Bot<C: Client> {
     behavior: Box<dyn Behavior<C>>,
@@ -38,7 +41,7 @@ fn run_bot(token: String) -> BotResult<()> {
 
     let bot = Arc::new(Bot {
         vk: VkApi::new(ureq::agent(), token)?,
-        behavior: Box::new(ChestBehavior::new()),
+        behavior: Box::new(ChestBehavior::new(REDIS_URL)?),
     });
 
     println!("{}", bot);
