@@ -4,7 +4,8 @@ use crate::storage::Storage;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
 use crate::MSG_DELAY;
 
-const SUCCESS_IMG: &'static str = "tests/fixtures/test.jpg";
+const SUCCESS_IMG: (&'static [u8], &str) =
+    (include_bytes!("../../static/chest_success.jpg"), "jpg");
 const SUCCESS_TEXT: &'static str =
     "Внутри сундука ты нашел это! Покажи сообщение в канцелярии, чтобы получить награду";
 const FAIL_TEXT: &'static str = "Ничего не произошло";

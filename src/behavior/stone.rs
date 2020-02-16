@@ -16,6 +16,9 @@ const STAGE_HASHES: [&[(&'static str, [u8; 14])]; 1] = [
     // stages two+: tbd
 ];
 
+const STAGE_COMPLETION_PICS: [(&'static [u8], &str); 1] =
+    [(include_bytes!("../../static/stone_stage_1.jpg"), "jpg")];
+
 const STORAGE_STAGE_HASH: &'static str = "stone_stage";
 const STORAGE_LETTER_BUCKET_PREF: &'static str = "stone_letter_";
 
@@ -75,7 +78,8 @@ impl<C: Client> Behavior<C> for StoneBehavior {
         )?;
         if total_matched == buckets_should_match.len() {
             let next_stage = self.storage.hash_incr(STORAGE_STAGE_HASH, msg.from_id, 1)?;
-            let photo = vk.upload_message_photo(msg.from_id, completion_image(next_stage))?;
+            let photo =
+                vk.upload_message_photo(msg.from_id, STAGE_COMPLETION_PICS[player_stage as usize])?;
 
             std::thread::sleep(MSG_DELAY);
             vk.send(msg.from_id, "", Some(&photo))

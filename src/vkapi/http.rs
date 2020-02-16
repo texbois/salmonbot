@@ -22,17 +22,17 @@ pub trait Client: Send + Sync + 'static {
         &self,
         url: &str,
         field_name: &str,
-        data: &[u8],
-        data_ext: &str, // thank you vk for ignoring content-type and requiring file extensions
+        // thank you vk for ignoring content-type and requiring file extensions
+        data_with_ext: (&[u8], &str),
         json_response_key: Option<&str>,
     ) -> crate::BotResult<T> {
         let boundary = "----------------------------ImbotMultipartBoundary";
         let mut body = format!(
             "--{}\r\nContent-Disposition: form-data; name=\"{}\"; filename=\"file.{}\"\r\n\r\n",
-            boundary, field_name, data_ext
+            boundary, field_name, data_with_ext.1
         )
         .into_bytes();
-        body.extend_from_slice(data);
+        body.extend_from_slice(data_with_ext.0);
         body.extend_from_slice(b"\r\n--");
         body.extend_from_slice(boundary.as_bytes());
         body.extend_from_slice(b"--");

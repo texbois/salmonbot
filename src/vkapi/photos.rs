@@ -1,11 +1,10 @@
 use crate::vkapi::{Client, VkApi, VkPhoto};
 use crate::BotResult;
 use serde_derive::Deserialize;
-use std::path::Path;
 
 pub trait VkPhotosApi {
     fn download_photo(&self, photo: &VkPhoto) -> BotResult<Vec<u8>>;
-    fn upload_message_photo<P: AsRef<Path>>(&self, peer_id: i64, path: P) -> BotResult<String>;
+    fn upload_message_photo(&self, peer_id: i64, photo: (&[u8], &str)) -> BotResult<String>;
 }
 
 #[derive(Debug, Deserialize)]
@@ -20,17 +19,10 @@ impl<C: Client> VkPhotosApi for VkApi<C> {
         self.client.fetch(&photo.0, &[], &[], None)
     }
 
-    fn upload_message_photo<P: AsRef<Path>>(&self, peer_id: i64, path: P) -> BotResult<String> {
-        let image_ext = path
-            .as_ref()
-            .extension()
-            .and_then(|e| e.to_str())
-            .unwrap_or("jpg");
-        let image = std::fs::read(&path)?;
-        let upload_url = get_upload_url(&self, peer_id)?;
+    fn upload_message_photo(&self, peer_id: i64, photo: (&[u8], &str)) -> BotResult<String> {
+        let url = get_upload_url(&self, peer_id)?;
         let upload: VkPhotoUploadResponse =
-            self.client
-                .post_multipart(&upload_url, "photo", &image, image_ext, None)?;
+            self.client.post_multipart(&url, "photo", photo, None)?;
         let media: serde_json::Value = self.call_api(
             "photos.saveMessagesPhoto",
             &[
@@ -49,12 +41,7 @@ impl<C: Client> VkPhotosApi for VkApi<C> {
                 }
             }
         }
-        Err(format!(
-            "Unable to upload {}, unexpected media response: {:?}",
-            path.as_ref().display(),
-            media
-        )
-        .into())
+        Err(format!("Unable to upload photo, unexpected response: {:?}", media).into())
     }
 }
 
@@ -89,7 +76,10 @@ mod tests {
             community_id: "1001".into(),
         };
         let media_obj = vk
-            .upload_message_photo(101, "tests/fixtures/test.jpg")
+            .upload_message_photo(
+                101,
+                (include_bytes!("../../tests/fixtures/test.jpg"), "jpg"),
+            )
             .unwrap();
         assert_eq!(media_obj, "photo101_7777777");
     }
