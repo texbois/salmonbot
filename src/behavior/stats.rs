@@ -54,7 +54,11 @@ impl<C: Client> Behavior<C> for StatsBehavior {
 
         use crate::behavior::chest::STORAGE_COMPL_SET as CHEST_KEY;
         let chest_completions = self.storage.sets_len([CHEST_KEY].iter())?[0];
-        write!(&mut s, "\nСундук: {}", chest_completions).unwrap();
+        write!(&mut s, "\nСундук: {}\n", chest_completions).unwrap();
+
+        use crate::behavior::gates::STORAGE_COMPL_SET as GATES_KEY;
+        let gates_completions = self.storage.sets_len([GATES_KEY].iter())?[0];
+        write!(&mut s, "\nВорота: {}", gates_completions).unwrap();
 
         vk.send(msg.from_id, &s, None)
     }

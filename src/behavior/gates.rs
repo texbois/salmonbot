@@ -6,7 +6,7 @@ use crate::MSG_DELAY;
 const SUCCESS_TEXT: &str = "RIGHT.";
 const FAIL_TEXT: &str = "WRONG.";
 const ANSWER: &str = "123456789";
-const STORAGE_COMPL_SET: &str = "gates_completed_by";
+pub const STORAGE_COMPL_SET: &str = "gates_completed_by";
 
 pub struct GatesBehavior {
     storage: Storage,
