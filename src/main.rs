@@ -4,7 +4,6 @@ mod vkapi;
 use vkapi::{Client, VkApi, VkLongPoll, VkMessage};
 mod behavior;
 use behavior::{Behavior, ChestBehavior, TestBehavior, StoneBehavior, GatesBehavior};
-use behavior::{Behavior, ChestBehavior, TestBehavior, GatesBehavior};
 mod img_match;
 mod storage;
 
