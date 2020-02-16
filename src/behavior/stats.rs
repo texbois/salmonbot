@@ -4,11 +4,18 @@ use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi};
 
 pub struct StatsBehavior {
     storage: Storage,
+    admin_ids: Vec<i64>,
 }
 
 impl StatsBehavior {
     pub fn new(storage: Storage) -> Self {
-        Self { storage }
+        let admin_ids = std::env::var("STATS_ADMIN_IDS")
+            .expect("Provide admin user ids via the STATS_ADMIN_IDS environment variable")
+            .split(',')
+            .map(|id| i64::from_str_radix(id, 10).unwrap())
+            .collect();
+
+        Self { storage, admin_ids }
     }
 }
 
@@ -20,6 +27,10 @@ impl std::fmt::Display for StatsBehavior {
 
 impl<C: Client> Behavior<C> for StatsBehavior {
     fn process_on_own_thread<'s>(&'s self, vk: &VkApi<C>, msg: &VkMessage) -> ThreadResult<'s> {
+        if !self.admin_ids.contains(&msg.from_id) {
+            return Ok(())
+        }
+
         use std::fmt::Write;
         let mut s = String::new();
 
