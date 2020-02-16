@@ -1,9 +1,10 @@
 use crate::vkapi::{Client, VkApi, VkMessage};
-use crate::BotResult;
 
 mod chest;
 pub use chest::ChestBehavior;
 
+pub type ThreadResult<'e> = Result<(), Box<dyn std::error::Error + 'e>>;
+
 pub trait Behavior<C: Client>: Send + Sync + std::fmt::Display {
-    fn process_on_own_thread(&self, vk: &VkApi<C>, msg: &VkMessage) -> BotResult<()>;
+    fn process_on_own_thread<'s>(&'s self, vk: &VkApi<C>, msg: &VkMessage) -> ThreadResult<'s>;
 }
