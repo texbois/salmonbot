@@ -1,6 +1,6 @@
 use crate::BotResult;
 use redis::Commands;
-use std::sync::Mutex;
+use std::{ops::DerefMut, sync::Mutex};
 
 pub type StorageResult<'s, T> = Result<T, Box<dyn std::error::Error + 's>>;
 
@@ -38,5 +38,45 @@ impl Storage {
         let mut conn = self.redis.lock()?;
         conn.sismember(set, value)
             .map_err(|e| format!("Cannot check membership of {} in {}: {}", value, set, e).into())
+    }
+
+    pub fn sets_add_and_count_containing<'s, V: redis::ToRedisArgs + std::fmt::Display + Copy>(
+        &'s self,
+        add_to_sets: &Vec<String>,
+        count_in_sets: &Vec<String>,
+        value: V,
+    ) -> StorageResult<'s, usize> {
+        let mut conn = self.redis.lock()?;
+        let mut pipe = redis::pipe();
+        pipe.atomic();
+        for set in add_to_sets {
+            pipe.sadd(set, value).ignore();
+        }
+        for set in count_in_sets {
+            pipe.sismember(set, value);
+        }
+        pipe.query::<Vec<bool>>(conn.deref_mut())
+            .map(|r| r.iter().filter(|ismem| **ismem).count())
+            .map_err(|e| {
+                format!(
+                    "Cannot add {} to sets {} with membership check across {}: {}",
+                    value,
+                    add_to_sets.join(","),
+                    count_in_sets.join(","),
+                    e
+                )
+                .into()
+            })
+    }
+
+    pub fn hash_incr<'s, F: redis::ToRedisArgs + std::fmt::Display + Copy>(
+        &'s self,
+        hash: &str,
+        field: F,
+        delta: i64,
+    ) -> StorageResult<'s, i64> {
+        let mut conn = self.redis.lock()?;
+        conn.hincr(hash, field, delta)
+            .map_err(|e| format!("Cannot increment {}[{}] by {}: {}", hash, field, delta, e).into())
     }
 }
