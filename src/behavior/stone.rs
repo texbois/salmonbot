@@ -87,6 +87,8 @@ impl<C: Client> Behavior<C> for StoneBehavior {
             vk.send(msg.from_id, "", Some(&photo))
         } else {
             let reply = format!("{}/{}", total_matched, buckets_should_match.len());
+
+            std::thread::sleep(MSG_DELAY);
             vk.send(msg.from_id, &reply, None)
         }
     }
