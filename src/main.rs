@@ -17,7 +17,7 @@ pub const MSG_DELAY: Duration = Duration::from_millis(4800);
 
 pub type BotResult<T> = Result<T, Box<dyn Error>>;
 
-const REDIS_URL: &'static str = "redis://127.0.0.1/";
+const REDIS_URL: &str = "redis://127.0.0.1/";
 
 struct Bot<C: Client> {
     behavior: Box<dyn Behavior<C>>,

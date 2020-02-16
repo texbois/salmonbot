@@ -5,7 +5,7 @@ use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
 use crate::MSG_DELAY;
 
 #[rustfmt::skip]
-const STAGE_HASHES: [&[(&'static str, [u8; 14])]; 1] = [
+const STAGE_HASHES: [&[(&str, [u8; 14])]; 1] = [
     // stage one
     &[
         ("уа", [188, 202, 74, 57, 105, 113, 196, 54, 203, 51, 153, 77, 101, 234]),
@@ -16,11 +16,11 @@ const STAGE_HASHES: [&[(&'static str, [u8; 14])]; 1] = [
     // stages two+: tbd
 ];
 
-const STAGE_COMPLETION_PICS: [(&'static [u8], &str); 1] =
+const STAGE_COMPLETION_PICS: [(&[u8], &str); 1] =
     [(include_bytes!("../../static/stone_stage_1.jpg"), "jpg")];
 
-const STORAGE_STAGE_HASH: &'static str = "stone_stage";
-const STORAGE_LETTER_BUCKET_PREF: &'static str = "stone_letter_";
+const STORAGE_STAGE_HASH: &str = "stone_stage";
+const STORAGE_LETTER_BUCKET_PREF: &str = "stone_letter_";
 
 pub struct StoneBehavior {
     matcher: ImageMatcher,
@@ -77,7 +77,7 @@ impl<C: Client> Behavior<C> for StoneBehavior {
             msg.from_id,
         )?;
         if total_matched == buckets_should_match.len() {
-            let next_stage = self.storage.hash_incr(STORAGE_STAGE_HASH, msg.from_id, 1)?;
+            let _next_stage = self.storage.hash_incr(STORAGE_STAGE_HASH, msg.from_id, 1)?;
             let photo =
                 vk.upload_message_photo(msg.from_id, STAGE_COMPLETION_PICS[player_stage as usize])?;
 
@@ -98,8 +98,4 @@ fn wrong_stage_text(stage: i64) -> &'static str {
         3 => "Нужно собрать последнее заклинание",
         _ => "",
     }
-}
-
-fn completion_image(_next_stage: i64) -> &'static str {
-    "tests/fixtures/test.jpg"
 }

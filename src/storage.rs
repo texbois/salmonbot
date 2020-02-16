@@ -42,8 +42,8 @@ impl Storage {
 
     pub fn sets_add_and_count_containing<'s, V: redis::ToRedisArgs + std::fmt::Display + Copy>(
         &'s self,
-        add_to_sets: &Vec<String>,
-        count_in_sets: &Vec<String>,
+        add_to_sets: &[String],
+        count_in_sets: &[String],
         value: V,
     ) -> StorageResult<'s, usize> {
         let mut conn = self.redis.lock()?;

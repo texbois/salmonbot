@@ -4,16 +4,15 @@ use crate::storage::Storage;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
 use crate::MSG_DELAY;
 
-const SUCCESS_IMG: (&'static [u8], &str) =
-    (include_bytes!("../../static/chest_success.jpg"), "jpg");
-const SUCCESS_TEXT: &'static str =
+const SUCCESS_IMG: (&[u8], &str) = (include_bytes!("../../static/chest_success.jpg"), "jpg");
+const SUCCESS_TEXT: &str =
     "Внутри сундука ты нашел это! Покажи сообщение в канцелярии, чтобы получить награду";
-const FAIL_TEXT: &'static str = "Ничего не произошло";
+const FAIL_TEXT: &str = "Ничего не произошло";
 const HASH_WRENCH: [u8; 14] = [
     220, 149, 201, 150, 157, 70, 121, 74, 100, 98, 218, 101, 142, 77,
 ];
 
-const STORAGE_COMPL_SET: &'static str = "chest_completed_by";
+const STORAGE_COMPL_SET: &str = "chest_completed_by";
 
 pub struct ChestBehavior {
     matcher: ImageMatcher,
