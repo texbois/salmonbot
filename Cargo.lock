@@ -219,6 +219,7 @@ dependencies = [
  "hamming 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "image 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "img_hash 3.0.0 (git+https://github.com/CryZe/img_hash?rev=4cadae9e2607afa63965c7112a34ee27880a25ac)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",

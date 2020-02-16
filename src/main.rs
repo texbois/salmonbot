@@ -3,7 +3,7 @@
 mod vkapi;
 use vkapi::{VkApi, VkLongPoll};
 mod behavior;
-use behavior::{Behavior, ChestBehavior};
+use behavior::{Behavior, ChestBehavior, spawn_message_handler};
 mod img_match;
 
 pub const MSG_DELAY: std::time::Duration = std::time::Duration::from_millis(4800);
@@ -21,18 +21,23 @@ fn main() {
 }
 
 fn run_bot(token: String) -> BotResult<()> {
-    let client = ureq::agent();
-    let vk = VkApi::new(client, token)?;
-    println!("Running {}", vk);
+    use std::sync::Arc;
 
-    let mut behavior = ChestBehavior::new();
+    let http_client = ureq::agent();
+    let vk = VkApi::new(http_client, token)?;
 
-    let mut lp = VkLongPoll::init(&vk)?;
+    let behavior: Box<dyn Behavior<ureq::Agent>> = Box::new(ChestBehavior::new());
+    let handler = Arc::new((behavior, vk));
+
+    println!("Running {}", handler.1);
+
+    let mut lp = VkLongPoll::init(&handler.1)?;
     loop {
         lp.poll_once(|msg| {
             // TODO: better logging
             println!("Message: {:?}", msg);
-            behavior.on_message(&vk, msg)
+            spawn_message_handler(handler.clone(), msg);
+            Ok(())
         })?;
     }
 }

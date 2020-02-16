@@ -5,11 +5,10 @@ mod photos;
 mod types;
 pub use http::Client;
 pub use long_poll::{VkLongPoll, VkLongPollState};
-pub use messages::{VkMessagesApi, VkOutboundMessage};
+pub use messages::VkMessagesApi;
 pub use photos::VkPhotosApi;
 pub use types::{VkMessage, VkPhoto};
 
-#[derive(Clone)]
 pub struct VkApi<C: Client> {
     pub client: C,
     token: String,

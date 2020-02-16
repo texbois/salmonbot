@@ -1,4 +1,4 @@
-pub trait Client: Send + Clone + 'static {
+pub trait Client: Send + Sync + 'static {
     fn fetch(
         &self,
         url: &str,
@@ -120,7 +120,7 @@ pub mod test_client {
     use std::iter::FromIterator;
     use std::sync::{Arc, Mutex};
 
-    #[derive(Clone, Debug)]
+    #[derive(Debug)]
     pub struct TestClient {
         fixtures: Arc<Mutex<RefCell<VecDeque<ClientFixture>>>>,
     }
