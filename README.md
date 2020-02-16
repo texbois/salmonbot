@@ -19,10 +19,20 @@ see below for a list of available behaviors
 
 #### chest
 
-the bot performs perceptual image comparison against a hardcoded hash,
-additionally checking whether has already participated (boolean state per user ID)
+perform perceptual image comparison against a hardcoded hash,
+additionally preventing the player from participating more than once
+(the player's id is stored/looked up in a set)
+
+#### stone
+
+controls the player's progression by placing their id in buckets (sets)
+according to the submitted image.
+
+the challenge is split into several stages with distinct images.
+to advance to the next one, the player's id needs to exist
+in all buckets for the current stage.
 
 #### test
 
-the bot replies with perceptual hashes of images it receives —
+reply with perceptual hashes of submitted images —
 handy for development and testing
