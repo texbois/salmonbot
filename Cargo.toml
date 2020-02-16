@@ -1,5 +1,5 @@
 [package]
-name = "imbot"
+name = "salmonbot"
 version = "0.1.0"
 authors = ["texbois"]
 edition = "2018"

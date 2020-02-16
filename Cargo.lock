@@ -232,21 +232,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "imbot"
-version = "0.1.0"
-dependencies = [
- "hamming 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "image 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "img_hash 3.0.0 (git+https://github.com/CryZe/img_hash?rev=4cadae9e2607afa63965c7112a34ee27880a25ac)",
- "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "redis 0.15.2-alpha.0 (git+https://github.com/Marwes/redis-rs?branch=combine-4)",
- "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
- "ureq 0.11.4 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "img_hash"
 version = "3.0.0"
 source = "git+https://github.com/CryZe/img_hash?rev=4cadae9e2607afa63965c7112a34ee27880a25ac#4cadae9e2607afa63965c7112a34ee27880a25ac"
@@ -543,6 +528,21 @@ dependencies = [
 name = "ryu"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "salmonbot"
+version = "0.1.0"
+dependencies = [
+ "hamming 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "image 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "img_hash 3.0.0 (git+https://github.com/CryZe/img_hash?rev=4cadae9e2607afa63965c7112a34ee27880a25ac)",
+ "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "redis 0.15.2-alpha.0 (git+https://github.com/Marwes/redis-rs?branch=combine-4)",
+ "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ureq 0.11.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "scoped_threadpool"
