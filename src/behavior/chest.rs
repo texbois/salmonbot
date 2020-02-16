@@ -12,7 +12,7 @@ const HASH_WRENCH: [u8; 14] = [
     220, 149, 201, 150, 157, 70, 121, 74, 100, 98, 218, 101, 142, 77,
 ];
 
-const STORAGE_COMPL_SET: &str = "chest_completed_by";
+pub const STORAGE_COMPL_SET: &str = "chest_completed_by";
 
 pub struct ChestBehavior {
     matcher: ImageMatcher,

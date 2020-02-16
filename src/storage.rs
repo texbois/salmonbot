@@ -46,7 +46,6 @@ impl Storage {
         count_in_sets: &[String],
         value: V,
     ) -> StorageResult<'s, usize> {
-        let mut conn = self.redis.lock()?;
         let mut pipe = redis::pipe();
         pipe.atomic();
         for set in add_to_sets {
@@ -55,6 +54,7 @@ impl Storage {
         for set in count_in_sets {
             pipe.sismember(set, value);
         }
+        let mut conn = self.redis.lock()?;
         pipe.query::<Vec<bool>>(conn.deref_mut())
             .map(|r| r.iter().filter(|ismem| **ismem).count())
             .map_err(|e| {
@@ -67,6 +67,20 @@ impl Storage {
                 )
                 .into()
             })
+    }
+
+    pub fn sets_len<'s, S: AsRef<str>, I: IntoIterator<Item = S>>(
+        &'s self,
+        sets: I,
+    ) -> StorageResult<'s, Vec<u64>> {
+        let mut pipe = redis::pipe();
+        pipe.atomic();
+        for set in sets {
+            pipe.scard(set.as_ref());
+        }
+        let mut conn = self.redis.lock()?;
+        pipe.query::<Vec<u64>>(conn.deref_mut())
+            .map_err(|e| format!("Cannot lookup set cardinality: {}", e).into())
     }
 
     pub fn hash_incr<'s, F: redis::ToRedisArgs + std::fmt::Display + Copy>(

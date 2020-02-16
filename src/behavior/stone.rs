@@ -5,7 +5,7 @@ use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
 use crate::MSG_DELAY;
 
 #[rustfmt::skip]
-const STAGE_HASHES: [&[(&str, [u8; 14])]; 1] = [
+pub const STAGE_HASHES: [&[(&str, [u8; 14])]; 1] = [
     // stage one
     &[
         ("уа", [188, 202, 74, 57, 105, 113, 196, 54, 203, 51, 153, 77, 101, 234]),
@@ -20,7 +20,9 @@ const STAGE_COMPLETION_PICS: [(&[u8], &str); 1] =
     [(include_bytes!("../../static/stone_stage_1.jpg"), "jpg")];
 
 const STORAGE_STAGE_HASH: &str = "stone_stage";
-const STORAGE_LETTER_BUCKET_PREF: &str = "stone_letter_";
+pub fn storage_letter_bucket(letter: &str) -> String {
+    ["stone_letter_", letter].concat()
+}
 
 pub struct StoneBehavior {
     matcher: ImageMatcher,
@@ -50,7 +52,7 @@ impl<C: Client> Behavior<C> for StoneBehavior {
 
         let buckets_should_match = STAGE_HASHES[player_stage as usize]
             .iter()
-            .map(|(letter, _)| [STORAGE_LETTER_BUCKET_PREF, letter].concat())
+            .map(|(letter, _)| storage_letter_bucket(letter))
             .collect::<Vec<_>>();
         let mut buckets_matched: Vec<String> = Vec::new();
 
@@ -62,7 +64,7 @@ impl<C: Client> Behavior<C> for StoneBehavior {
                 for (letter, letter_hash) in letter_hashes.iter() {
                     if ImageMatcher::matches(letter_hash, &hash) {
                         if player_stage == stage as i64 {
-                            buckets_matched.push([STORAGE_LETTER_BUCKET_PREF, letter].concat());
+                            buckets_matched.push(storage_letter_bucket(letter));
                         } else {
                             std::thread::sleep(MSG_DELAY);
                             return vk.send(msg.from_id, wrong_stage_text(player_stage), None);

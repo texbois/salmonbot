@@ -3,7 +3,7 @@
 mod vkapi;
 use vkapi::{Client, VkApi, VkLongPoll, VkMessage};
 mod behavior;
-use behavior::{Behavior, ChestBehavior, TestBehavior, StoneBehavior, GatesBehavior};
+use behavior::*;
 mod img_match;
 mod storage;
 
@@ -44,9 +44,10 @@ fn make_bot(args: Vec<String>, token: String) -> BotResult<Arc<Bot<ureq::Agent>>
     let vk = VkApi::new(ureq::agent(), token)?;
     let behavior: Box<dyn Behavior<ureq::Agent>> = match args.get(1).map(|a| a.as_str()) {
         Some("chest") => Box::new(ChestBehavior::new(storage)),
-        Some("test") => Box::new(TestBehavior::new()),
-        Some("stone") => Box::new(StoneBehavior::new(storage)),
         Some("gates") => Box::new(GatesBehavior::new(storage)),
+        Some("stats") => Box::new(StatsBehavior::new(storage)),
+        Some("stone") => Box::new(StoneBehavior::new(storage)),
+        Some("test") => Box::new(TestBehavior::new()),
         _ => {
             return Err(format!(
                 r#"No behavior specified.
