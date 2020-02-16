@@ -25,8 +25,8 @@ additionally preventing the player from participating more than once
 
 #### stone
 
-controls the player's progression by placing their id in buckets (sets)
-according to the submitted image.
+control the player's progression through the challenge by placing
+their id in buckets (sets) according to the submitted image.
 
 the challenge is split into several stages with distinct images.
 to advance to the next one, the player's id needs to exist

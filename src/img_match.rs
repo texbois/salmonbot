@@ -1,6 +1,6 @@
 use crate::BotResult;
 
-const HAMMING_TOLERANCE: u64 = 2;
+const HAMMING_TOLERANCE: u64 = 3;
 
 pub struct ImageMatcher {
     hasher: img_hash::Hasher,
