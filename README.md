@@ -7,6 +7,14 @@ a vkontakte bot implementing some neat text&image-based quest challenges
 * a recent version of rust (developed on 1.41)
 * an instance of redis accessible on `redis://127.0.0.1/`
 
+## community setup
+
+1. go to *settings* -> *api usage*
+2. create a new token with the following rights: *community management*, *community messages*, *photos*
+3. switch to the *long poll api* tab
+4. enable it
+5. uncheck all event types but *message received*
+
 ## getting up and running
 
 ```
