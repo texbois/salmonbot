@@ -1,6 +1,7 @@
 use crate::behavior::{Behavior, ThreadResult};
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi};
 use crate::storage::Storage;
+use crate::MSG_DELAY;
 
 const SUCCESS_TEXT: &str = "RIGHT.";
 const FAIL_TEXT: &str = "WRONG.";
@@ -30,10 +31,13 @@ impl<C: Client> Behavior<C> for GatesBehavior {
         }
 
         if msg.text.contains(ANSWER) {
-            vk.send(msg.from_id, SUCCESS_TEXT, None)?;
             self.storage.set_add(STORAGE_COMPL_SET, msg.from_id)?;
+
+            std::thread::sleep(MSG_DELAY);
+            vk.send(msg.from_id, SUCCESS_TEXT, None)?;
         }
         else {
+            std::thread::sleep(MSG_DELAY);
             vk.send(msg.from_id, FAIL_TEXT, None)?;
         }
         Ok(())
