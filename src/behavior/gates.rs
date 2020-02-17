@@ -3,9 +3,9 @@ use crate::storage::Storage;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi};
 use crate::MSG_DELAY;
 
-const SUCCESS_TEXT: &str = "Ворота открылись, и ты можешь идти дальше: (здесь будет ссылка)";
+const SUCCESS_TEXT: &str = "Ворота открылись, и ты можешь идти дальше: vk.com/forestofwisdom";
 const FAIL_TEXT: &str = "Ничего не произошло";
-const ANSWER: &str = "123456789";
+const ANSWER: &str = "679823154";
 
 pub const STORAGE_COMPL_SET: &str = "gates_completed_by";
 
