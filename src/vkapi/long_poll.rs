@@ -30,7 +30,7 @@ impl<'a, C: Client> VkLongPoll<'a, C> {
 
     pub fn poll_once<F>(&mut self, mut callback: F) -> crate::BotResult<()>
     where
-        F: FnMut(VkMessage) -> crate::BotResult<()>,
+        F: FnMut(VkMessage) -> (),
     {
         let params = [
             ("act", "a_check"),
@@ -56,10 +56,10 @@ impl<'a, C: Client> VkLongPoll<'a, C> {
                 _ => return Err(format!("Long poll response missing \"ts\": {:?}", resp).into()),
             };
             if let Some(JsonValue::Array(updates)) = resp.get_mut("updates") {
-                updates
-                    .iter_mut()
-                    .filter_map(try_parse_update)
-                    .try_for_each(&mut callback)
+                for u in updates.iter_mut().filter_map(try_parse_update) {
+                    callback(u)
+                }
+                Ok(())
             } else {
                 Err(format!("Long poll response missing \"updates\": {:?}", resp).into())
             }
@@ -172,7 +172,7 @@ mod tests {
                 ts: "100".into(),
             },
         };
-        lp.poll_once(|_| Ok(())).unwrap();
+        lp.poll_once(|_| {}).unwrap();
         assert_eq!(lp.state.key, "new_long_poll_key");
         assert_eq!(lp.state.server, "https://new_long_poll_server");
         assert_eq!(lp.state.ts, "101");
@@ -195,10 +195,7 @@ mod tests {
                 ts: "100".into(),
             },
         }
-        .poll_once(|m| {
-            msg = Some(m);
-            Ok(())
-        })
+        .poll_once(|m| msg = Some(m))
         .unwrap();
         assert_eq!(
             msg,
@@ -235,10 +232,7 @@ mod tests {
                 ts: "100".into(),
             },
         }
-        .poll_once(|m| {
-            msg = Some(m);
-            Ok(())
-        })
+        .poll_once(|m| msg = Some(m))
         .unwrap();
         assert_eq!(
             msg,
@@ -269,10 +263,7 @@ mod tests {
                 ts: "100".into(),
             },
         }
-        .poll_once(|m| {
-            msg = Some(m);
-            Ok(())
-        })
+        .poll_once(|m| msg = Some(m))
         .unwrap();
         assert_eq!(
             msg,

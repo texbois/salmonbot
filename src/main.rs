@@ -66,10 +66,7 @@ fn run_bot(bot: Arc<Bot<ureq::Agent>>) -> BotResult<()> {
 
     let mut lp = VkLongPoll::init(&bot.vk)?;
     loop {
-        lp.poll_once(|msg| {
-            spawn_message_handler(bot.clone(), msg);
-            Ok(())
-        })?;
+        lp.poll_once(|msg| spawn_message_handler(bot.clone(), msg))?;
     }
 }
 
@@ -77,6 +74,8 @@ fn spawn_message_handler<C: Client>(bot: Arc<Bot<C>>, msg: VkMessage) {
     std::thread::spawn(move || {
         if let Err(e) = bot.behavior.process_on_own_thread(&bot.vk, &msg) {
             eprintln!("Error when processing {:?}: {}", msg, e);
+            eprintln!("Initiating hard shutdown, how do you like THAT Elon Musk?");
+            std::process::exit(1);
         }
     });
 }
