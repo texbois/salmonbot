@@ -71,6 +71,9 @@ impl Client for ureq::Agent {
         let mut data = Vec::new();
         resp.into_reader().read_to_end(&mut data)?;
 
+        #[cfg(test)]
+        println!("{} {:?} -> {}", url, query, std::str::from_utf8(&data).unwrap());
+
         Ok(data)
     }
 }

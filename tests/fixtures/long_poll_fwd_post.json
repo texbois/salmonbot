@@ -1,0 +1,150 @@
+[
+  {
+    "url": "https://long_poll_server",
+    "query": {
+      "act": "a_check",
+      "key": "long_poll_key",
+      "ts": "100",
+      "wait": "25"
+    },
+    "response": {
+      "ts": "103",
+      "updates": [
+        {
+          "type": "message_new",
+          "event_id": "deadbeef",
+          "group_id": 1,
+          "object": {
+            "client_info": {
+              "button_actions": [
+                "text",
+                "vkpay",
+                "open_app",
+                "location",
+                "open_link"
+              ],
+              "inline_keyboard": true,
+              "keyboard": true,
+              "lang_id": 3
+            },
+            "message": {
+              "date": 1581965623,
+              "from_id": 1010,
+              "id": 1,
+              "out": 0,
+              "peer_id": 1000,
+              "text": "",
+              "conversation_message_id": 1,
+              "fwd_messages": [],
+              "important": false,
+              "random_id": 0,
+              "attachments": [
+                {
+                  "type": "wall",
+                  "wall": {
+                    "id": 1,
+                    "from_id": -1111,
+                    "to_id": -1111,
+                    "date": 1581939160,
+                    "post_type": "post",
+                    "text": "post text here1",
+                    "marked_as_ads": 0,
+                    "attachments": [
+                      {
+                        "type": "photo",
+                        "photo": {
+                          "id": 1,
+                          "album_id": -1,
+                          "owner_id": -1111,
+                          "user_id": 100,
+                          "sizes": [
+                            {
+                              "height": 75,
+                              "type": "s",
+                              "url": "$small_url",
+                              "width": 75
+                            },
+                            {
+                              "height": 130,
+                              "type": "m",
+                              "url": "$med_url",
+                              "width": 130
+                            },
+                            {
+                              "height": 604,
+                              "type": "x",
+                              "url": "$x_url",
+                              "width": 604
+                            },
+                            {
+                              "height": 807,
+                              "type": "y",
+                              "url": "$800_url",
+                              "width": 807
+                            },
+                            {
+                              "height": 1080,
+                              "type": "z",
+                              "url": "$1080_url",
+                              "width": 1080
+                            },
+                            {
+                              "height": 200,
+                              "type": "p",
+                              "url": "$p_crop_url",
+                              "width": 200
+                            },
+                            {
+                              "height": 320,
+                              "type": "q",
+                              "url": "$q_crop_url",
+                              "width": 320
+                            },
+                            {
+                              "height": 510,
+                              "type": "r",
+                              "url": "$r_crop_url",
+                              "width": 510
+                            }
+                          ],
+                          "text": "",
+                          "date": 1581939160,
+                          "post_id": 7,
+                          "access_key": "photo_access_key"
+                        }
+                      }
+                    ],
+                    "comments": {
+                      "count": 999
+                    },
+                    "likes": {
+                      "count": 9999
+                    },
+                    "reposts": {
+                      "count": 99
+                    },
+                    "views": {
+                      "count": 9999999
+                    },
+                    "is_favorite": false,
+                    "access_key": "post_access_key",
+                    "from": {
+                      "id": 1111,
+                      "name": "community_name",
+                      "screen_name": "community_screen_name",
+                      "is_closed": 0,
+                      "type": "group",
+                      "photo_50": "community_cover_50_url",
+                      "photo_100": "community_cover_100_url"
+                    }
+                  }
+                }
+              ],
+              "is_hidden": false
+            }
+          }
+        }
+      ]
+    }
+  }
+]

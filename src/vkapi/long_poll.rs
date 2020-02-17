@@ -80,7 +80,7 @@ fn try_parse_message(message: &mut JsonValue) -> Option<VkMessage> {
     let attachments = message
         .get_mut("attachments")
         .and_then(|a| a.as_array_mut())
-        .map(|atts| atts.iter_mut().filter_map(try_extract_attachment).collect())
+        .map(|a| a.iter_mut().flat_map(parse_attachments).collect())
         .unwrap_or_default();
     let forwarded = message
         .get_mut("fwd_messages")
@@ -101,13 +101,26 @@ fn try_parse_message(message: &mut JsonValue) -> Option<VkMessage> {
     })
 }
 
-fn try_extract_attachment(attachment: &mut JsonValue) -> Option<VkPhoto> {
-    let photo_obj = if let Some(doc) = attachment.get_mut("doc") {
-        doc.get_mut("preview")?
+fn parse_attachments(attachment: &mut JsonValue) -> Vec<VkPhoto> {
+    let wall = attachment
+        .get_mut("wall")
+        .and_then(|w| w.get_mut("attachments"))
+        .and_then(|a| a.as_array_mut());
+    if let Some(wall_atts) = wall {
+        return wall_atts.iter_mut().flat_map(parse_attachments).collect();
+    }
+    let doc_photo = attachment
+        .get_mut("doc")
+        .and_then(|d| d.get_mut("preview"))
+        .and_then(try_parse_photo);
+    if let Some(photo) = doc_photo.or_else(|| try_parse_photo(attachment)) {
+        vec![photo]
     } else {
-        attachment
-    };
+        vec![]
+    }
+}
 
+fn try_parse_photo(photo_obj: &mut JsonValue) -> Option<VkPhoto> {
     let mut opt_size_obj = photo_obj
         .get_mut("photo")?
         .get_mut("sizes")?
@@ -201,6 +214,40 @@ mod tests {
                     forwarded: vec![],
                     reply_to: None
                 }))
+            })
+        );
+    }
+
+    #[test]
+    fn test_parse_post() {
+        let vk = VkApi {
+            client: crate::vkapi::http::TestClient::new("long_poll_fwd_post.json"),
+            token: "token".into(),
+            community_name: "sample_community".into(),
+            community_id: "1001".into(),
+        };
+        let mut msg: Option<VkMessage> = None;
+        VkLongPoll {
+            api: &vk,
+            state: VkLongPollState {
+                key: "long_poll_key".into(),
+                server: "https://long_poll_server".into(),
+                ts: "100".into(),
+            },
+        }
+        .poll_once(|m| {
+            msg = Some(m);
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(
+            msg,
+            Some(VkMessage {
+                text: String::new(),
+                from_id: 1010,
+                attachments: vec![VkPhoto("$med_url".into())],
+                forwarded: vec![],
+                reply_to: None
             })
         );
     }
