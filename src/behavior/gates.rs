@@ -1,7 +1,8 @@
 use crate::behavior::{Behavior, ThreadResult};
 use crate::storage::Storage;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi};
-use crate::MSG_DELAY;
+use crate::MSG_DELAY_SUCCESS;
+use crate::MSG_DELAY_FAIL;
 
 const SUCCESS_TEXT: &str = "Ворота открылись, и ты можешь идти дальше: vk.com/forestofwisdom";
 const FAIL_TEXT: &str = "Ничего не произошло";
@@ -32,10 +33,10 @@ impl<C: Client> Behavior<C> for GatesBehavior {
         } else if msg.text.contains(ANSWER) {
             self.storage.set_add(STORAGE_COMPL_SET, msg.from_id)?;
 
-            std::thread::sleep(MSG_DELAY);
+            std::thread::sleep(MSG_DELAY_SUCCESS);
             vk.send(msg.from_id, SUCCESS_TEXT, None)
         } else {
-            std::thread::sleep(MSG_DELAY);
+            std::thread::sleep(MSG_DELAY_FAIL);
             vk.send(msg.from_id, FAIL_TEXT, None)
         }
     }

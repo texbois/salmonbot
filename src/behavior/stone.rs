@@ -2,7 +2,8 @@ use crate::behavior::{Behavior, ThreadResult};
 use crate::img_match::ImageMatcher;
 use crate::storage::Storage;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
-use crate::MSG_DELAY;
+use crate::MSG_DELAY_FAIL;
+use crate::MSG_DELAY_SUCCESS;
 
 #[rustfmt::skip]
 pub const STAGE_HASHES: [&[(&str, [u8; 18])]; 1] = [
@@ -66,7 +67,7 @@ impl<C: Client> Behavior<C> for StoneBehavior {
                         if player_stage == stage as i64 {
                             buckets_matched.push(storage_letter_bucket(letter));
                         } else {
-                            std::thread::sleep(MSG_DELAY);
+                            std::thread::sleep(MSG_DELAY_FAIL);
                             return vk.send(msg.from_id, wrong_stage_text(player_stage), None);
                         }
                     }
@@ -83,12 +84,12 @@ impl<C: Client> Behavior<C> for StoneBehavior {
             let photo =
                 vk.upload_message_photo(msg.from_id, STAGE_COMPLETION_PICS[player_stage as usize])?;
 
-            std::thread::sleep(MSG_DELAY);
+            std::thread::sleep(MSG_DELAY_SUCCESS);
             vk.send(msg.from_id, "", Some(&photo))
         } else {
             let reply = format!("{}/{}", total_matched, buckets_should_match.len());
-
-            std::thread::sleep(MSG_DELAY);
+            
+            std::thread::sleep(MSG_DELAY_SUCCESS);
             vk.send(msg.from_id, &reply, None)
         }
     }

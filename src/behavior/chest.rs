@@ -2,7 +2,8 @@ use crate::behavior::{Behavior, ThreadResult};
 use crate::img_match::ImageMatcher;
 use crate::storage::Storage;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
-use crate::MSG_DELAY;
+use crate::MSG_DELAY_SUCCESS;
+use crate::MSG_DELAY_FAIL;
 
 const SUCCESS_IMG: (&[u8], &str) = (include_bytes!("../../static/chest_success.jpg"), "jpg");
 const SUCCESS_TEXT: &str =
@@ -50,12 +51,12 @@ impl<C: Client> Behavior<C> for ChestBehavior {
                     msg.from_id, completed_cnt
                 );
 
-                std::thread::sleep(MSG_DELAY);
+                std::thread::sleep(MSG_DELAY_SUCCESS);
                 return vk.send(msg.from_id, SUCCESS_TEXT, Some(&photo));
             }
         }
 
-        std::thread::sleep(MSG_DELAY);
+        std::thread::sleep(MSG_DELAY_FAIL);
         vk.send(msg.from_id, FAIL_TEXT, None)
     }
 }

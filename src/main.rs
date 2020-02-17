@@ -9,7 +9,8 @@ mod storage;
 
 use std::{env, error::Error, sync::Arc, time::Duration};
 
-pub const MSG_DELAY: Duration = Duration::from_millis(4800);
+pub const MSG_DELAY_FAIL: Duration = Duration::from_millis(4800);
+pub const MSG_DELAY_SUCCESS: Duration = Duration::from_millis(400);
 
 pub type BotResult<T> = Result<T, Box<dyn Error>>;
 
