@@ -22,12 +22,10 @@ impl Storage {
         &'s self,
         set: &str,
         value: V,
-    ) -> StorageResult<'s, u64> {
+    ) -> StorageResult<'s, ()> {
         let mut conn = self.redis.lock()?;
-        match conn.sadd(set, value) {
-            Ok(()) => conn.scard(set).map_err(|e| e.into()),
-            Err(e) => Err(format!("Cannot add {} to {}: {}", value, set, e).into()),
-        }
+        conn.sadd(set, value)
+            .map_err(|e| format!("Cannot add {} to {}: {}", value, set, e).into())
     }
 
     pub fn set_contains<'s, V: redis::ToRedisArgs + std::fmt::Display + Copy>(

@@ -2,8 +2,7 @@ use crate::behavior::{Behavior, ThreadResult};
 use crate::img_match::ImageMatcher;
 use crate::storage::Storage;
 use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
-use crate::MSG_DELAY_SUCCESS;
-use crate::MSG_DELAY_FAIL;
+use crate::{MSG_DELAY_FAIL, MSG_DELAY_SUCCESS};
 
 const SUCCESS_IMG: (&[u8], &str) = (include_bytes!("../../static/chest_success.jpg"), "jpg");
 const SUCCESS_TEXT: &str =
@@ -39,24 +38,24 @@ impl<C: Client> Behavior<C> for ChestBehavior {
             return Ok(());
         }
 
+        let mut wrench_matched = false;
         for att in msg.all_attachments() {
             let image = vk.download_photo(att)?;
             let hash = self.matcher.hash(&image)?;
             if ImageMatcher::matches(&HASH_WRENCH, &hash) {
-                let photo = vk.upload_message_photo(msg.from_id, SUCCESS_IMG)?;
-                let completed_cnt = self.storage.set_add(STORAGE_COMPL_SET, msg.from_id)?;
-
-                println!(
-                    "Chest challenge completed by {} (total completions: {})",
-                    msg.from_id, completed_cnt
-                );
-
-                std::thread::sleep(MSG_DELAY_SUCCESS);
-                return vk.send(msg.from_id, SUCCESS_TEXT, Some(&photo));
+                wrench_matched = true;
+                break;
             }
         }
 
-        std::thread::sleep(MSG_DELAY_FAIL);
-        vk.send(msg.from_id, FAIL_TEXT, None)
+        if wrench_matched {
+            std::thread::sleep(MSG_DELAY_SUCCESS);
+            let photo = vk.upload_message_photo(msg.from_id, SUCCESS_IMG)?;
+            vk.send(msg.from_id, SUCCESS_TEXT, Some(&photo))?;
+            self.storage.set_add(STORAGE_COMPL_SET, msg.from_id)
+        } else {
+            std::thread::sleep(MSG_DELAY_FAIL);
+            vk.send(msg.from_id, FAIL_TEXT, None)
+        }
     }
 }

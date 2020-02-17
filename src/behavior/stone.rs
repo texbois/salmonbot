@@ -80,18 +80,20 @@ impl<C: Client> Behavior<C> for StoneBehavior {
             msg.from_id,
         )?;
         if total_matched == buckets_should_match.len() {
-            let _next_stage = self.storage.hash_incr(STORAGE_STAGE_HASH, msg.from_id, 1)?;
-            let photo =
-                vk.upload_message_photo(msg.from_id, STAGE_COMPLETION_PICS[player_stage as usize])?;
-
             std::thread::sleep(MSG_DELAY_SUCCESS);
-            vk.send(msg.from_id, "", Some(&photo))
+
+            let completion_pic = STAGE_COMPLETION_PICS[player_stage as usize];
+            let photo = vk.upload_message_photo(msg.from_id, completion_pic)?;
+            vk.send(msg.from_id, "", Some(&photo))?;
+
+            let _ = self.storage.hash_incr(STORAGE_STAGE_HASH, msg.from_id, 1)?;
         } else {
             let reply = format!("{}/{}", total_matched, buckets_should_match.len());
-            
+
             std::thread::sleep(MSG_DELAY_SUCCESS);
-            vk.send(msg.from_id, &reply, None)
+            vk.send(msg.from_id, &reply, None)?;
         }
+        Ok(())
     }
 }
 
