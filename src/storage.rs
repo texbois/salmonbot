@@ -10,8 +10,9 @@ pub struct Storage {
 
 impl Storage {
     pub fn new(redis_url: &str) -> BotResult<Self> {
-        let client = redis::Client::open(redis_url)?;
-        let redis = client.get_connection()?;
+        let redis = redis::Client::open(redis_url)
+            .and_then(|c| c.get_connection())
+            .map_err(|e| format!("Redis: {}", e))?;
 
         Ok(Self {
             redis: Mutex::new(redis),
