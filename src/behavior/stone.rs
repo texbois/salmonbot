@@ -6,7 +6,7 @@ use crate::MSG_DELAY_FAIL;
 use crate::MSG_DELAY_SUCCESS;
 
 #[rustfmt::skip]
-pub const STAGE_HASHES: [&[(&str, [u8; 18])]; 2] = [
+pub const STAGE_HASHES: [&[(&str, [u8; 18])]; 3] = [
     // stage one
     &[
         ("1-уа", [188, 149, 171, 74, 147, 173, 156, 226, 76, 182, 22, 79, 73, 153, 169, 153, 245, 36]),
@@ -21,13 +21,31 @@ pub const STAGE_HASHES: [&[(&str, [u8; 18])]; 2] = [
         ("2-м", [74, 146, 177, 165, 124, 108, 220, 77, 148, 196, 102, 184, 182, 84, 232, 137, 24, 179]),
         ("2-э", [108, 178, 91, 108, 183, 92, 179, 140, 51, 84, 150, 169, 45, 82, 75, 237, 150, 42]),
         ("2-о", [50, 48, 212, 151, 44, 75, 204, 221, 182, 170, 41, 212, 230, 94, 118, 204, 91, 99])
-    ]
-    // stages three+: tbd
+    ],
+    // stage three
+    &[
+        ("3-к-1", [56, 101, 110, 57, 210, 178, 90, 107, 165, 58, 116, 93, 237, 97, 170, 146, 97, 141]),
+        ("3-у-1", [102, 45, 145, 83, 69, 173, 40, 149, 44, 170, 219, 214, 201, 185, 115, 146, 172, 82]),
+        ("3-у-2", [172, 42, 86, 75, 109, 53, 171, 84, 217, 120, 77, 165, 75, 164, 83, 156, 207, 204]),
+        ("3-р", [222, 21, 165, 123, 85, 53, 90, 169, 71, 90, 75, 41, 219, 211, 22, 82, 148, 86]),
+        ("3-и-1", [150, 150, 45, 181, 85, 46, 106, 107, 225, 20, 199, 85, 212, 91, 204, 213, 41, 204]),
+        ("3-к-2", [178, 28, 198, 203, 77, 101, 206, 102, 153, 122, 156, 214, 82, 55, 173, 92, 90, 82]),
+        ("3-к-3", [162, 212, 247, 115, 216, 191, 15, 110, 154, 108, 45, 180, 50, 44, 157, 150, 103, 74]),
+        ("3-и-2", [74, 112, 179, 132, 146, 140, 116, 51, 36, 148, 83, 106, 230, 148, 12, 105, 185, 171])
+    ],
+    // stage four: tbd
 ];
 
-const STAGE_COMPLETION_PICS: [(&[u8], &str); 2] = [
+const STAGE_COMPLETION_TEXTS: [&str; 3] = [
+    "Ты собрал первое заклинание! Начни поиски следующего здесь: vk.com/downthewater",
+    "Ты собрал второе заклинание! Начни поиски следующего здесь: vk.com/kolobokmarket",
+    "",
+];
+
+const STAGE_COMPLETION_PICS: [(&[u8], &str); 3] = [
     (include_bytes!("../../static/stone_stage_1.jpg"), "jpg"),
     (include_bytes!("../../static/stone_stage_2.jpg"), "jpg"),
+    (include_bytes!("../../static/stone_stage_3.jpg"), "jpg"),
 ];
 
 const STORAGE_STAGE_HASH: &str = "stone_stage";
@@ -92,9 +110,10 @@ impl<C: Client> Behavior<C> for StoneBehavior {
         if total_matched == buckets_should_match.len() {
             std::thread::sleep(MSG_DELAY_SUCCESS);
 
+            let completion_text = STAGE_COMPLETION_TEXTS[player_stage as usize];
             let completion_pic = STAGE_COMPLETION_PICS[player_stage as usize];
             let photo = vk.upload_message_photo(msg.from_id, completion_pic)?;
-            vk.send(msg.from_id, "", Some(&photo))?;
+            vk.send(msg.from_id, completion_text, Some(&photo))?;
 
             let _ = self.storage.hash_incr(STORAGE_STAGE_HASH, msg.from_id, 1)?;
         } else {
