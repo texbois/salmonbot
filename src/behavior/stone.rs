@@ -6,7 +6,7 @@ use crate::MSG_DELAY_FAIL;
 use crate::MSG_DELAY_SUCCESS;
 
 #[rustfmt::skip]
-pub const STAGE_HASHES: [&[(&str, [u8; 18])]; 3] = [
+pub const STAGE_HASHES: [&[(&str, [u8; 18])]; 4] = [
     // stage one
     &[
         ("1-уа", [188, 149, 171, 74, 147, 173, 156, 226, 76, 182, 22, 79, 73, 153, 169, 153, 245, 36]),
@@ -33,19 +33,26 @@ pub const STAGE_HASHES: [&[(&str, [u8; 18])]; 3] = [
         ("3-к-3", [162, 212, 247, 115, 216, 191, 15, 110, 154, 108, 45, 180, 50, 44, 157, 150, 103, 74]),
         ("3-и-2", [74, 112, 179, 132, 146, 140, 116, 51, 36, 148, 83, 106, 230, 148, 12, 105, 185, 171])
     ],
-    // stage four: tbd
+    // stage four:
+    &[
+        ("4-ом", [44, 106, 195, 20, 211, 172, 219, 188, 188, 84, 104, 43, 86, 82, 118, 84, 172, 171]),
+        ("4-уа", [44, 106, 203, 148, 51, 46, 83, 61, 172, 212, 108, 41, 214, 210, 94, 76, 41, 171]),
+        ("4-зь", [122, 146, 150, 100, 75, 11, 184, 82, 60, 164, 5, 89, 83, 153, 105, 182, 100, 53])
+    ]
 ];
 
-const STAGE_COMPLETION_TEXTS: [&str; 3] = [
+const STAGE_COMPLETION_TEXTS: [&str; 4] = [
     "Ты собрал первое заклинание! Начни поиски следующего здесь: vk.com/downthewater",
     "Ты собрал второе заклинание! Начни поиски следующего здесь: vk.com/kolobokmarket",
     "Ты собрал третье заклинание! Начни поиски следующего здесь: vk.com/flyinghorse",
+    "Поздравляем! Ты собрал все четыре заклинания. Теперь перешли это сообщение домику."
 ];
 
-const STAGE_COMPLETION_PICS: [(&[u8], &str); 3] = [
+const STAGE_COMPLETION_PICS: [(&[u8], &str); 4] = [
     (include_bytes!("../../static/stone_stage_1.jpg"), "jpg"),
     (include_bytes!("../../static/stone_stage_2.jpg"), "jpg"),
     (include_bytes!("../../static/stone_stage_3.jpg"), "jpg"),
+    (include_bytes!("../../static/stone_stage_4.jpg"), "jpg"),
 ];
 
 const STORAGE_STAGE_HASH: &str = "stone_stage";

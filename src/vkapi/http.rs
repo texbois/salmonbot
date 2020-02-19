@@ -79,7 +79,7 @@ impl Client for ureq::Agent {
             "{} {:?} -> {}",
             url,
             query,
-            std::str::from_utf8(&data).unwrap()
+            std::str::from_utf8(&data).unwrap_or("<bin>")
         );
 
         Ok(data)
