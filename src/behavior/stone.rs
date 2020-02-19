@@ -39,7 +39,7 @@ pub const STAGE_HASHES: [&[(&str, [u8; 18])]; 3] = [
 const STAGE_COMPLETION_TEXTS: [&str; 3] = [
     "Ты собрал первое заклинание! Начни поиски следующего здесь: vk.com/downthewater",
     "Ты собрал второе заклинание! Начни поиски следующего здесь: vk.com/kolobokmarket",
-    "",
+    "Ты собрал третье заклинание! Начни поиски следующего здесь: vk.com/flyinghorse",
 ];
 
 const STAGE_COMPLETION_PICS: [(&[u8], &str); 3] = [
