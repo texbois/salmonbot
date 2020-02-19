@@ -63,7 +63,10 @@ impl Client for ureq::Agent {
         for (header, v) in headers {
             request.set(header, v);
         }
-        request.timeout_connect(5_000).timeout_read(30_000);
+        request
+            .timeout_connect(5_000)
+            .timeout_read(30_000)
+            .timeout_write(5_000);
         let resp = match body {
             Some(data) => request.send_bytes(data),
             _ => request.call(),
@@ -72,7 +75,12 @@ impl Client for ureq::Agent {
         resp.into_reader().read_to_end(&mut data)?;
 
         #[cfg(test)]
-        println!("{} {:?} -> {}", url, query, std::str::from_utf8(&data).unwrap());
+        println!(
+            "{} {:?} -> {}",
+            url,
+            query,
+            std::str::from_utf8(&data).unwrap()
+        );
 
         Ok(data)
     }

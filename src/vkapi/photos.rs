@@ -20,9 +20,24 @@ impl<C: Client> VkPhotosApi for VkApi<C> {
     }
 
     fn upload_message_photo(&self, peer_id: i64, photo: (&[u8], &str)) -> BotResult<String> {
-        let url = get_upload_url(&self, peer_id)?;
-        let upload: VkPhotoUploadResponse =
-            self.client.post_multipart(&url, "photo", photo, None)?;
+        let mut retries = 0;
+        let upload = loop {
+            let resp = get_upload_url(&self, peer_id).and_then(|url| {
+                self.client
+                    .post_multipart::<VkPhotoUploadResponse>(&url, "photo", photo, None)
+            });
+            match resp {
+                Err(e) if retries == 0 => {
+                    retries += 1;
+                    eprintln!(
+                        "Error when uploading photo to {}'s messages: {}. Retrying once",
+                        peer_id, e
+                    );
+                }
+                _ => break resp,
+            }
+        }?;
+
         let media: serde_json::Value = self.call_api(
             "photos.saveMessagesPhoto",
             &[
