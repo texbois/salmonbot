@@ -1,0 +1,39 @@
+[
+  {
+    "url": "https://api.vk.com/method/users.get",
+    "query": {
+      "user_ids": "wednesdayfrog",
+      "fields": "screen_name",
+      "access_token": "token",
+      "v": "5.103"
+    },
+    "response": {
+      "error": {
+        "error_code": 113,
+        "error_msg": "Invalid user id",
+        "request_params": [
+          {
+            "key": "user_ids",
+            "value": "wednesdayfrog"
+          },
+          {
+            "key": "fields",
+            "value": "screen_name"
+          },
+          {
+            "key": "v",
+            "value": "5.103"
+          },
+          {
+            "key": "method",
+            "value": "users.get"
+          },
+          {
+            "key": "oauth",
+            "value": "1"
+          }
+        ]
+      }
+    }
+  }
+]

@@ -1,0 +1,23 @@
+[
+  {
+    "url": "https://api.vk.com/method/users.get",
+    "query": {
+      "user_ids": "michiganjfrog",
+      "fields": "screen_name",
+      "access_token": "token",
+      "v": "5.103"
+    },
+    "response": {
+      "response": [
+        {
+          "id": 1,
+          "first_name": "Hello",
+          "last_name": "My Baby",
+          "is_closed": false,
+          "can_access_closed": true,
+          "screen_name": "michiganjfrog"
+        }
+      ]
+    }
+  }
+]

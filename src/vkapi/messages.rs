@@ -1,13 +1,6 @@
 use crate::vkapi::{Client, VkApi};
 use crate::BotResult;
 
-#[derive(Debug)]
-pub struct VkOutboundMessage {
-    peer_id: i64,
-    text: String,
-    attachment: Option<String>,
-}
-
 pub trait VkMessagesApi {
     fn send(&self, peer_id: i64, text: &str, attachment: Option<&str>) -> BotResult<()>;
 }

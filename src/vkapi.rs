@@ -3,11 +3,13 @@ mod long_poll;
 mod messages;
 mod photos;
 mod types;
+mod users;
 pub use http::Client;
 pub use long_poll::{VkLongPoll, VkLongPollState};
 pub use messages::VkMessagesApi;
 pub use photos::VkPhotosApi;
 pub use types::{VkMessage, VkPhoto};
+pub use users::VkUsersApi;
 
 pub struct VkApi<C: Client> {
     pub client: C,
