@@ -23,8 +23,8 @@ impl ImageMatcher {
         Ok(image_hash)
     }
 
-    pub fn matches(expected: &[u8], hash: &img_hash::ImageHash) -> bool {
+    pub fn matches(expected: &[u8], hash: &img_hash::ImageHash, tolerance_inc_hack: u64) -> bool {
         let dist = hamming::distance(&expected, hash.as_bytes());
-        dist <= HAMMING_TOLERANCE
+        dist <= (HAMMING_TOLERANCE + tolerance_inc_hack)
     }
 }

@@ -45,7 +45,7 @@ const STAGE_COMPLETION_TEXTS: [&str; 4] = [
     "Ты собрал первое заклинание! Начни поиски следующего здесь: vk.com/downthewater",
     "Ты собрал второе заклинание! Начни поиски следующего здесь: vk.com/kolobokmarket",
     "Ты собрал третье заклинание! Начни поиски следующего здесь: vk.com/flyinghorse",
-    "Поздравляем! Ты собрал все четыре заклинания. Теперь перешли это сообщение домику."
+    "Поздравляем! Ты собрал все четыре заклинания. Теперь перешли это сообщение домику.",
 ];
 
 const STAGE_COMPLETION_PICS: [(&[u8], &str); 4] = [
@@ -58,6 +58,13 @@ const STAGE_COMPLETION_PICS: [(&[u8], &str); 4] = [
 const STORAGE_STAGE_HASH: &str = "stone_stage";
 pub fn storage_letter_bucket(letter: &str) -> String {
     ["stone_letter_", letter].concat()
+}
+
+fn hash_tolerance_inc_hack(letter: &str) -> u64 {
+    match letter {
+        "1-о" => 3,
+        _ => 0,
+    }
 }
 
 pub struct StoneBehavior {
@@ -98,7 +105,7 @@ impl<C: Client> Behavior<C> for StoneBehavior {
 
             for (stage, letter_hashes) in STAGE_HASHES.iter().enumerate() {
                 for (letter, letter_hash) in letter_hashes.iter() {
-                    if ImageMatcher::matches(letter_hash, &hash) {
+                    if ImageMatcher::matches(letter_hash, &hash, hash_tolerance_inc_hack(letter)) {
                         if player_stage == stage as i64 {
                             buckets_matched.push(storage_letter_bucket(letter));
                         } else {

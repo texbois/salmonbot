@@ -42,7 +42,7 @@ impl<C: Client> Behavior<C> for ChestBehavior {
         for att in msg.all_attachments() {
             let image = vk.download_photo(att)?;
             let hash = self.matcher.hash(&image)?;
-            if ImageMatcher::matches(&HASH_WRENCH, &hash) {
+            if ImageMatcher::matches(&HASH_WRENCH, &hash, 0) {
                 wrench_matched = true;
                 break;
             }
