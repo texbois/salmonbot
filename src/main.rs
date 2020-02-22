@@ -45,7 +45,7 @@ fn make_bot(args: Vec<String>, token: String) -> BotResult<Arc<Bot<ureq::Agent>>
         Some("chest") => Box::new(ChestBehavior::new(storage)),
         Some("gates") => Box::new(GatesBehavior::new(storage)),
         Some("stats") => Box::new(StatsBehavior::new(storage, admin_ids())),
-        Some("stone") => Box::new(StoneBehavior::new(storage)),
+        Some("stone") => Box::new(StoneBehavior::new(storage, admin_ids())),
         Some("test") => Box::new(TestBehavior::new()),
         _ => {
             return Err(format!(

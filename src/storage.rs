@@ -82,6 +82,17 @@ impl Storage {
             .map_err(|e| format!("Cannot lookup set cardinality: {}", e).into())
     }
 
+    pub fn hash_set<'s, F: redis::ToRedisArgs + std::fmt::Display + Copy>(
+        &'s self,
+        hash: &str,
+        field: F,
+        value: u64,
+    ) -> StorageResult<'s, i64> {
+        let mut conn = self.redis.lock()?;
+        conn.hset(hash, field, value)
+            .map_err(|e| format!("Cannot set {}[{}] to {}: {}", hash, field, value, e).into())
+    }
+
     pub fn hash_incr<'s, F: redis::ToRedisArgs + std::fmt::Display + Copy>(
         &'s self,
         hash: &str,

@@ -5,6 +5,8 @@ use crate::vkapi::{Client, VkApi, VkMessage, VkMessagesApi, VkPhotosApi};
 use crate::MSG_DELAY_FAIL;
 use crate::MSG_DELAY_SUCCESS;
 
+mod admin;
+use admin::StoneAdmin;
 mod consts;
 use consts::{hash_tolerance_inc_hack, STORAGE_STAGE_HASH};
 pub use consts::{storage_letter_bucket, STAGE_HASHES};
@@ -13,12 +15,16 @@ use consts::{wrong_stage_text, STAGE_COMPLETION_PICS, STAGE_COMPLETION_TEXTS};
 pub struct StoneBehavior {
     matcher: ImageMatcher,
     storage: Storage,
+    admin_ids: Vec<i64>,
 }
 
 impl StoneBehavior {
-    pub fn new(storage: Storage) -> Self {
-        let matcher = ImageMatcher::new();
-        Self { matcher, storage }
+    pub fn new(storage: Storage, admin_ids: Vec<i64>) -> Self {
+        Self {
+            matcher: ImageMatcher::new(),
+            storage,
+            admin_ids,
+        }
     }
 }
 
@@ -30,6 +36,9 @@ impl std::fmt::Display for StoneBehavior {
 
 impl<C: Client> Behavior<C> for StoneBehavior {
     fn process_on_own_thread<'s>(&'s self, vk: &VkApi<C>, msg: &VkMessage) -> ThreadResult<'s> {
+        if self.admin_ids.contains(&msg.from_id) {
+            return self.reply_admin(vk, msg);
+        }
         // hincrby 0 is analogous to get or set to 0
         let player_stage = self.storage.hash_incr(STORAGE_STAGE_HASH, msg.from_id, 0)?;
         if player_stage == STAGE_HASHES.len() as i64 {
