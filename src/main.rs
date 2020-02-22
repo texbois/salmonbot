@@ -44,7 +44,7 @@ fn make_bot(args: Vec<String>, token: String) -> BotResult<Arc<Bot<ureq::Agent>>
     let behavior: Box<dyn Behavior<ureq::Agent>> = match args.get(1).map(|a| a.as_str()) {
         Some("chest") => Box::new(ChestBehavior::new(storage)),
         Some("gates") => Box::new(GatesBehavior::new(storage)),
-        Some("stats") => Box::new(StatsBehavior::new(storage)),
+        Some("stats") => Box::new(StatsBehavior::new(storage, admin_ids())),
         Some("stone") => Box::new(StoneBehavior::new(storage)),
         Some("test") => Box::new(TestBehavior::new()),
         _ => {
@@ -59,6 +59,20 @@ Usage: {} behavior
         }
     };
     Ok(Arc::new(Bot { vk, behavior }))
+}
+
+fn admin_ids() -> Vec<i64> {
+    let admin_ids = env::var("SALMON_ADMIN_IDS")
+        .unwrap_or_default()
+        .split(',')
+        .filter_map(|id| i64::from_str_radix(id, 10).ok())
+        .collect::<Vec<i64>>();
+    if admin_ids.is_empty() {
+        println!("Warning: no admin users specified (SALMON_ADMIN_IDS is empty)")
+    } else {
+        println!("Admin users: {:?}", admin_ids)
+    }
+    admin_ids
 }
 
 fn run_bot(bot: Arc<Bot<ureq::Agent>>) -> BotResult<()> {
