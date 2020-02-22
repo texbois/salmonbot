@@ -2,12 +2,22 @@ use crate::vkapi::{Client, VkApi};
 use crate::BotResult;
 use serde_derive::Deserialize;
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 pub struct VkUser {
     pub id: i64,
     pub screen_name: String,
     pub first_name: String,
     pub last_name: String,
+}
+
+impl std::fmt::Display for VkUser {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} {} (@{}, id {})",
+            self.first_name, self.last_name, self.screen_name, self.id
+        )
+    }
 }
 
 pub trait VkUsersApi {
@@ -47,6 +57,7 @@ mod tests {
         assert_eq!(user.id, 1);
         assert_eq!(user.first_name, "Hello");
         assert_eq!(user.last_name, "My Baby");
+        assert_eq!(format!("{}", user), "Hello My Baby (@michiganjfrog, id 1)");
     }
 
     #[test]
